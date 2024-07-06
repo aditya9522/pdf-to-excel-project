@@ -15,7 +15,8 @@
             <h2>OCR Form</h2>
         </div>
         <div class="container px-5 mt-5">
-            <form class="border rounded p-5">
+            <form class="border rounded p-5" method="POST" action="display/">
+                {% csrf_token %}
                 <div class="mb-3">
                     <label for="objective" class="form-label">Objective</label>
                     <input type="text" class="form-control" id="objective" placeholder="" name="objective">
@@ -30,7 +31,12 @@
                 </div>
                 <div class="mb-3">
                     <label for="volums" class="form-label">Volums</label>
-                    <input type="text" class="form-control" id="volums" name="volums">
+                    <select class="form-select" aria-label="Default select example" id="volums" name="volums">
+                        <option selected>Open this select menu</option>
+                        <option value="Volume 1">Volume 1</option>
+                        <option value="Volume 2">Volume 2</option>
+                        <option value="Volume 3">Volume 3</option>
+                      </select>
                 </div>
                 <div class="mb-3">
                     <label for="ingradient" class="form-label">Ingradient</label>
@@ -57,7 +63,7 @@
                     <input type="text" class="form-control" id="conclusion" name="conclusion">
                 </div>
                 <div class="mb-3">
-                    <div class="btn btn-success">Submit</div>
+                    <button type="submit" class="btn btn-success">Submit</button>
                 </div>
             </form>
         </div>

@@ -1,15 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OCR Data</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 </head>
-<body>
-    <h1>OCR Data</h1>
 
-    <ol>
-        <li></li>
-    </ol>
+<body>
+    <div class="text-center bg-warning text-light py-2">
+        <h2>OCR Data</h2>
+    </div>
+    <div class="container">
+        <div class="d-flex justify-content-end m-3 px-5">
+            <button class="btn btn-info text-light"><a href="pdf/" class="text-decoration-none text-light">Print</a></button>
+        </div>
+        <div class="px-5 mt-4">
+            <table class="table">
+                <tr>
+                    <th class="w-25">Field</th>
+                    <th class="">Value</th>
+                </tr>
+                <tr>
+                    <td>Objective</td>
+                    <td id="objective">{{objective}}</td>
+                </tr>
+                <tr>
+                    <td>Scope</td>
+                    <td id="scope">{{scope}}</td>
+                </tr>
+                <tr>
+                    <td>Concentration</td>
+                    <td id="concentration">{{concentration}}</td>
+                </tr>
+                <tr>
+                    <td>Volumes</td>
+                    <td id="volums">{{volums}}</td>
+                </tr>
+                <tr>
+                    <td>Ingredient</td>
+                    <td id="ingradient">{{ingradient}}</td>
+                </tr>
+                <tr>
+                    <td>Spec. IO</td>
+                    <td id="spec_io">{{spec_io}}</td>
+                </tr>
+                <tr>
+                    <td>Spec. Dates</td>
+                    <td id="spec_dates">{{spec_dates}}</td>
+                </tr>
+                <tr>
+                    <td>Procedure</td>
+                    <td id="procedure">{{procedure}}</td>
+                </tr>
+                <tr>
+                    <td>Calculation Details</td>
+                    <td id="calculation_details">{{calculation_details}}</td>
+                </tr>
+                <tr>
+                    <td>Conclusion</td>
+                    <td id="conclusion">{{conclusion}}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
 </body>
 </html>

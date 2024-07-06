@@ -20,6 +20,6 @@ from smartapp.views import default
 
 urlpatterns = [
     path('', default, name='default'),  # Root URL to default view (welcome.html)
-    path('ocr/', include('smartapp.urls')),  # Include URLs from smartapp app
+    path('', include('smartapp.urls')),  # Include URLs from smartapp app
     path('admin/', admin.site.urls),
 ]
