@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}Welcome - SmartExcel{% endblock title %}
+
+{% block head %} Smart Excel {% endblock head %}
+
+{% block body %}
+
+    <div class="d-flex justify-content-center my-5">
+        <div class="card my-5 px-3" style="width: 40%;">
+            <div class="card-body">
+                <div class="h2 mb-5 text-center">Welcome To OCR </div>
+                <p class="card-text">Lets make it easy to convert the data to pdf and excel so what we are waiting for. Lets 
+                    get started, click on a below button to open the form.</p>
+                <div class="text-center">
+                    <a href="/form" class="btn btn-info text-light">Open Form</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock body %}

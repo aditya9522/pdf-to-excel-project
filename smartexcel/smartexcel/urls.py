@@ -16,10 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from smartapp.views import default
 
 urlpatterns = [
-    path('', default, name='default'),  # Root URL to default view (welcome.html)
-    path('', include('smartapp.urls')),  # Include URLs from smartapp app
     path('admin/', admin.site.urls),
+    path('', include('smartapp.urls')),  # Include URLs from smartapp app
 ]

@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+
+{% block title %}Data - SmartExcel{% endblock title %}
+
+{% block head %} Form Data {% endblock head %}
+
+{% block body %}
+    <div class="container">
+        <div class="d-flex justify-content-end m-3 px-5">
+            <button class="btn btn-primary text-light" data-bs-toggle="modal" data-bs-target="#exportModal">Export</button>
+        </div>
+        <div class="px-5 my-4">
+            <div class="border rounded p-3">
+                <table class="table">
+                    <tr>
+                        <th class="w-25">Field</th>
+                        <th class="">Value</th>
+                    </tr>
+                    <tr>
+                        <td>Objective</td>
+                        <td id="objective">{{form.objective}}</td>
+                    </tr>
+                    <tr>
+                        <td>Scope</td>
+                        <td id="scope">{{form.scope}}</td>
+                    </tr>
+                    <tr>
+                        <td>Concentration</td>
+                        <td id="concentration">{{form.concentration}}</td>
+                    </tr>
+                    <tr>
+                        <td>Volumes</td>
+                        <td id="volums">{{form.volums}}</td>
+                    </tr>
+                    <tr>
+                        <td>Ingredient</td>
+                        <td id="ingradient">{{form.ingradient}}</td>
+                    </tr>
+                    <tr>
+                        <td>Spec. IO</td>
+                        <td id="spec_io">{{form.spec_io}}</td>
+                    </tr>
+                    <tr>
+                        <td>Spec. Dates</td>
+                        <td id="spec_dates">{{form.spec_dates}}</td>
+                    </tr>
+                    <tr>
+                        <td>Procedure</td>
+                        <td id="procedure">{{form.procedure}}</td>
+                    </tr>
+                    <tr>
+                        <td>Calculation Details</td>
+                        <td id="calculation_details">{{form.calculation_details}}</td>
+                    </tr>
+                    <tr>
+                        <td>Conclusion</td>
+                        <td id="conclusion">{{form.conclusion}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exportModalLabel">Export Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Export data as you like.</p>
+                    <div class="d-flex justify-content-between mb-3">
+                        <a href = "{% url 'download' form_id=form.id %}" class="btn btn-primary" id="exportPdfBtn">Export as PDF</a>
+                    </div>
+                    <form id="pdfUploadForm" action="{% url 'export_excel' %}" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="pdf" class="form-label">Upload file :</label>
+                            <input class="form-control" type="file" id="pdf" name="pdf">
+                        </div>
+                        <div class="">
+                            <button type="submit" class="btn btn-success" id="exportExcelBtn">Export as Excel</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock body %}
