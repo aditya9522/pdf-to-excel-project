@@ -3,15 +3,44 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 import textwrap
+from django.conf import settings
 from django.http import HttpResponse
 from smartapp.models import FormData
-from .utils import convert_pdf_to_excel
+from openpyxl import Workbook
+from .utils import pdf_to_excel
+import os
 import io
+from django.contrib.auth import authenticate, login, logout
 
-def index(request):
-    return render(request, 'index.html')
+def index(request): 
+    if request.method == 'POST':
+        userid = request.POST.get('userid')
+        password = request.POST.get('password')
+        user = authenticate(request, username = userid, password = password)
+        if user is not None:
+            login(request, user)
+            return redirect('form/')
+        else:
+            context = {
+                'show': False
+            }
+            return render(request, 'index.html', context)
+    context = {
+        'show': False
+    }
+    return render(request, 'index.html', context)
+
+def logoutUser(request):
+    logout(request)
+    return redirect('/')
 
 def form(request):
+    context = {
+        'show': False
+    }
+    if not request.user.is_authenticated:
+        return redirect('/', context)
+
     if request.method == 'POST':
         objective = request.POST.get('objective')
         scope = request.POST.get('scope')
@@ -42,6 +71,9 @@ def form(request):
     return render(request, 'form.html')
 
 def display(request, form_id):
+    if not request.user.is_authenticated:
+        return redirect('/')
+
     form = FormData.objects.get(id=form_id) 
     context = {
         'form': form
@@ -118,16 +150,78 @@ def generate_pdf(request, form_id):
     p.save()
     return response
 
-def export_excel(request):
-    if request.method == 'POST' and request.FILES['pdf']:
+def generate_excel(request, form_id):
+    form = FormData.objects.get(id=form_id)
+    data = {
+        'Objective': form.objective,
+        'Scope': form.scope,
+        'Concentration': form.concentration,
+        'Volumes': form.volums,
+        'Ingredient': form.ingradient,
+        'Spec. IO': form.spec_io,
+        'Spec. Dates': form.spec_dates,
+        'Procedure': form.procedure,
+        'Calculation Details': form.calculation_details,
+        'Conclusion': form.conclusion,
+    }
+
+    # Create a new Excel workbook and add a worksheet
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Form Data"
+
+    # Set headers
+    worksheet.cell(row=1, column=1, value="Field")
+    worksheet.cell(row=1, column=2, value="Value")
+
+    # Write data to Excel
+    for index, (field, value) in enumerate(data.items(), start=2):
+        worksheet.cell(row=index, column=1, value=field)  # Field
+        worksheet.cell(row=index, column=2, value=value)  # Value
+
+    # Adjust column width
+    worksheet.column_dimensions['A'].width = 30
+    worksheet.column_dimensions['B'].width = 60
+
+    # Save the workbook to a BytesIO object
+    excel_file = io.BytesIO()
+    workbook.save(excel_file)
+    excel_file.seek(0)
+
+    # Create HTTP response with Excel file
+    response = HttpResponse(excel_file, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="form_data.xlsx"'
+    
+    return response
+
+def export_excel(request, form_id):
+    if request.method == 'POST' and request.FILES.get('pdf'):
         pdf_file = request.FILES['pdf']
-        excel_file = convert_pdf_to_excel(pdf_file)
-
-        response = HttpResponse(
-            excel_file.getvalue(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = 'attachment; filename="exported_data.xlsx"'
+        
+        # Save the uploaded PDF file temporarily
+        temp_dir = os.path.join(settings.BASE_DIR, 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_pdf_path = os.path.join(temp_dir, pdf_file.name)
+        
+        with open(temp_pdf_path, 'wb') as temp_pdf:
+            for chunk in pdf_file.chunks():
+                temp_pdf.write(chunk)
+        
+        # Convert PDF to Excel
+        workbook = pdf_to_excel(temp_pdf_path)
+        
+        # Remove the temporary PDF file
+        os.remove(temp_pdf_path)
+        
+        # Create HTTP response with Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="{pdf_file.name.split(".")[0]}.xlsx"'
+        
+        # Save the workbook to response
+        excel_file = io.BytesIO()
+        workbook.save(excel_file)
+        excel_file.seek(0)
+        response.write(excel_file.getvalue())
+        
         return response
-
-    return redirect('index')
+    return redirect('form', form_id=form_id)

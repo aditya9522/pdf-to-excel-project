@@ -4,6 +4,10 @@
 
 {% block head %} Smart Excel {% endblock head %}
 
+{% block logoutButton %}
+    <a href="/logout" class="btn btn-danger text-pink f-medium">Log Out</a>
+{% endblock logoutButton %}
+
 {% block body %}
     <div class="d-flex justify-content-center my-5">
         <form class="border rounded px-4" method="POST" style="width: 60%;">

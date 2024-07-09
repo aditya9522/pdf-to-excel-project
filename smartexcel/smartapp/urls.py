@@ -2,9 +2,11 @@ from django.urls import path
 from smartapp import views
 
 urlpatterns = [
-    path('', views.index, name='index'),  # Map /smartapp/ocrform/ to index view (form.html)
+    path('', views.index, name='index'),
+    path('logout/', views.logoutUser, name='logout'),  
     path('form/', views.form, name='form'),
     path('display/<int:form_id>/', views.display, name='display'),
     path('download/<int:form_id>/', views.generate_pdf, name='download'),
-    path('export_excel/', views.export_excel, name='export_excel'),
+    path('download-excel/<int:form_id>/', views.generate_excel, name='download-excel'),
+    path('export_excel/<int:form_id>/', views.export_excel, name='export_excel'),
 ]

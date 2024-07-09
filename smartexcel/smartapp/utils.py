@@ -1,43 +1,54 @@
-import io
 import fitz  # PyMuPDF
+import io
 from openpyxl import Workbook
+from openpyxl.styles import Font
 
-def convert_pdf_to_excel(pdf_file):
-    # Create a new Excel workbook and add a worksheet
+def pdf_to_excel(pdf_file):
+    pdf_document = fitz.open(pdf_file)
+    
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = "PDF Data"
-
-    # Open the PDF file with PyMuPDF
-    pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
     
-    # Extract data assuming the format matches your form fields
-    data = []
+    bold_font = Font(bold=True)
+    
+    worksheet.cell(row=1, column=1, value="Field").font = bold_font
+    worksheet.cell(row=1, column=2, value="Value").font = bold_font
+    
+    current_row = 2
+    
     for page_num in range(len(pdf_document)):
-        page = pdf_document.load_page(page_num)
-        text = page.get_text()
-        lines = text.splitlines()
+        page = pdf_document[page_num]
+        text = page.get_text("text")
+        start = text.index('\n')
+        text = text[start+1:]
+        lines = text.split("\n")
+        #  Preparing data to insert in excel
+
+        key = None
+        value_lines = []
+        result = []
+
         for line in lines:
-            if ":" in line:
-                field, value = line.split(":", 1)
-                data.append([field.strip(), value.strip()])
+            if line.strip() == '': 
+                continue
+            if ':' in line and line.strip().endswith(':'):  
+                if key is not None:
+                    result.append([key, ' '.join(value_lines).strip()])
+                
+                key = line.split(':', 1)[0].strip()
+                value_lines = []
+            else:
+                value_lines.append(line.strip())
 
-    # Write data to Excel starting from row 2 (1st row reserved for headers)
-    for index, row_data in enumerate(data, start=2):
-        worksheet.cell(row=index, column=1, value=row_data[0])  # Field
-        worksheet.cell(row=index, column=2, value=row_data[1])  # Value
+        if key is not None:
+            result.append([key, ' '.join(value_lines).strip()])
 
-    # Set headers
-    worksheet.cell(row=1, column=1, value="Field")
-    worksheet.cell(row=1, column=2, value="Value")
+        # Data preparation completed now adding to the excel sheet
 
-    # Adjust column width
-    worksheet.column_dimensions['A'].width = 30
-    worksheet.column_dimensions['B'].width = 60
+        for item in result:
+            worksheet.cell(row=current_row, column=1, value=item[0])
+            worksheet.cell(row=current_row, column=2, value=item[1])
+            current_row += 1
 
-    # Save the workbook to a BytesIO object
-    excel_file = io.BytesIO()
-    workbook.save(excel_file)
-    excel_file.seek(0)
-
-    return excel_file
+    return workbook

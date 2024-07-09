@@ -9,8 +9,11 @@
 </head>
 <body>
     <header>
-        <div class="text-center bg-warning text-light py-2">
+        <div class="d-flex justify-content-between text-start px-5 bg-info text-light py-2">
             <h2>{% block head %}{% endblock head %}</h2>
+            <div class="mt-1">
+                {% block logoutButton %} {% endblock logoutButton %}
+            </div>
         </div>
     </header>
 

@@ -4,14 +4,19 @@
 
 {% block head %} Form Data {% endblock head %}
 
+{% block logoutButton %}
+    <a href="/logout" class="btn btn-danger text-pink f-medium">Log Out</a>
+{% endblock logoutButton %}
+
 {% block body %}
     <div class="container">
-        <div class="d-flex justify-content-end m-3 px-5">
-            <button class="btn btn-primary text-light" data-bs-toggle="modal" data-bs-target="#exportModal">Export</button>
+        <div class="d-flex justify-content-end gap-4 my-3 px-5">
+            <a href="/form" class="btn btn-info text-light" >Back</a>
+            <button class="btn btn-primary text-light" data-bs-toggle="modal" data-bs-target="#exportModal">Export Data</button>
         </div>
         <div class="px-5 my-4">
             <div class="border rounded p-3">
-                <table class="table">
+                <table class="table table-stripped">
                     <tr>
                         <th class="w-25">Field</th>
                         <th class="">Value</th>
@@ -69,18 +74,20 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Export data as you like.</p>
-                    <div class="d-flex justify-content-between mb-3">
-                        <a href = "{% url 'download' form_id=form.id %}" class="btn btn-primary" id="exportPdfBtn">Export as PDF</a>
+                    <p class="fw-medium">Choose format to export:</p>
+                    <div class="d-flex justify-content-around mb-4">
+                        <a href = "{% url 'download' form_id=form.id %}" class="btn btn-primary">Export as PDF</a>
+                        <a href = "{% url 'download-excel' form_id=form.id %}" class="btn btn-success">Export as Excel</a>
                     </div>
-                    <form id="pdfUploadForm" action="{% url 'export_excel' %}" method="POST" enctype="multipart/form-data">
+                    <p class="fw-medium">Convert pdf to excel : <br> 1. Upload the pdf file from your local system. <br> 2. Download Excel Sheet.</p>
+                    <form id="pdfUploadForm" action="{% url 'export_excel' form_id=form.id %}" method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="pdf" class="form-label">Upload file :</label>
                             <input class="form-control" type="file" id="pdf" name="pdf">
                         </div>
                         <div class="">
-                            <button type="submit" class="btn btn-success" id="exportExcelBtn">Export as Excel</button>
+                            <button type="submit" class="btn btn-success" id="exportExcelBtn">Download</button>
                         </div>
                     </form>
                 </div>
