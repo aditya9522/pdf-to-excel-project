@@ -3,6 +3,8 @@ from smartapp import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('update/<int:form_id>/', views.update, name='dashboard'),
     path('logout/', views.logoutUser, name='logout'),  
     path('form/', views.form, name='form'),
     path('display/<int:form_id>/', views.display, name='display'),

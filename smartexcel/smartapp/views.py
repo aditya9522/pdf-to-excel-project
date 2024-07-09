@@ -11,6 +11,7 @@ from .utils import pdf_to_excel
 import os
 import io
 from django.contrib.auth import authenticate, login, logout
+from django.utils import timezone
 
 def index(request): 
     if request.method == 'POST':
@@ -19,7 +20,7 @@ def index(request):
         user = authenticate(request, username = userid, password = password)
         if user is not None:
             login(request, user)
-            return redirect('form/')
+            return redirect('dashboard/')
         else:
             context = {
                 'show': False
@@ -29,6 +30,59 @@ def index(request):
         'show': False
     }
     return render(request, 'index.html', context)
+
+def dashboard(request):
+    records = FormData.objects.all().values()
+    data = list(records)
+
+    context = {
+        'show': False,
+        'data': data
+    }
+    if not request.user.is_authenticated:
+        return redirect('/', context)
+ 
+    return render(request, 'dashboard.html', context)
+
+def update(request, form_id):
+    form = FormData.objects.get(id=form_id) 
+    context = {
+        'form': form
+    }
+    
+    if request.method == 'POST':
+        objective = request.POST.get('objective')
+        scope = request.POST.get('scope')
+        concentration = request.POST.get('concentration')
+        volums = request.POST.get('volums')
+        ingradient = request.POST.get('ingradient')
+        spec_io = request.POST.get('spec_io')
+        spec_dates = request.POST.get('spec_dates')
+        procedure = request.POST.get('procedure')
+        calculation_details = request.POST.get('calculation_details')
+        conclusion = request.POST.get('conclusion')
+        initiation_date = timezone.now().date()
+
+        if not spec_dates:
+            spec_dates = None
+        
+        form = FormData(
+            objective=objective, 
+            scope=scope, 
+            concentration=concentration, 
+            volums=volums, 
+            ingradient=ingradient, 
+            spec_io=spec_io,
+            spec_dates=spec_dates,
+            procedure=procedure,
+            calculation_details=calculation_details,
+            conclusion=conclusion,
+            initiation_date=initiation_date
+        )
+        form.save()
+        return redirect('dashboard', form_id=form.id)
+
+    return render(request, 'edit.html', form_id=form.id)
 
 def logoutUser(request):
     logout(request)
@@ -52,6 +106,10 @@ def form(request):
         procedure = request.POST.get('procedure')
         calculation_details = request.POST.get('calculation_details')
         conclusion = request.POST.get('conclusion')
+        initiation_date = timezone.now().date()
+
+        if not spec_dates:
+            spec_dates = None
         
         form = FormData(
             objective=objective, 
@@ -63,7 +121,8 @@ def form(request):
             spec_dates=spec_dates,
             procedure=procedure,
             calculation_details=calculation_details,
-            conclusion=conclusion
+            conclusion=conclusion,
+            initiation_date=initiation_date
         )
         form.save()
         return redirect('display', form_id=form.id)
