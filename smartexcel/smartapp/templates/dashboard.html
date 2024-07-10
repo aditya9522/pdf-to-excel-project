@@ -15,18 +15,18 @@
         </div>
         <table class="table table-bordered mt-4">
             <thead class="bg-info">
-                <th class="bg-info">S.No.</th>
                 <th class="bg-info">Record Number</th>
                 <th class="bg-info w-75">Objective</th>
                 <th class="bg-info">Initiation Date</th>
+                <th class="bg-info">View</th>
             </thead>
             <tbody>
                 {% for record in data %}
                     <tr>
-                        <td>{{ forloop.counter }}</td>
                         <td><a href="{% url "update" form_id=record.id %}" class="nav-link text-primary">{{ record.id }}</a></td>
                         <td>{{ record.objective }}</td>
                         <td>{{ record.initiation_date }}</td>
+                        <td><a href="{% url "display" form_id=record.id %}" class="nav-link text-primary">view</a></td>
                     </tr>
                 {% endfor %}
             </tbody>

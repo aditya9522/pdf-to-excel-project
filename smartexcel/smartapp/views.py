@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
@@ -10,8 +10,10 @@ from openpyxl import Workbook
 from .utils import pdf_to_excel
 import os
 import io
+import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
+
 
 def index(request): 
     if request.method == 'POST':
@@ -45,44 +47,29 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 def update(request, form_id):
+    if request.method == 'POST':
+        #spec_details = datetime.datetime.strptime(spec_details, '%Y-%m-%d').date()
+        form = get_object_or_404(FormData, id=form_id) 
+        form.objective = request.POST.get('objective', '')
+        form.scope = request.POST.get('scope', '')
+        form.concentration = request.POST.get('concentration', '')
+        form.volums = request.POST.get('volums', '')
+        form.ingradient = request.POST.get('ingradient', '')
+        form.spec_io = request.POST.get('spec_io', '')
+        form.spec_details = request.POST.get('spec_details', '')
+        form.procedure = request.POST.get('procedure', '')
+        form.calculation_details = request.POST.get('calculation_details', '')
+        form.conclusion = request.POST.get('conclusion', '')
+        form.save()
+
+        return redirect('dashboard')
+    
     form = FormData.objects.get(id=form_id) 
     context = {
         'form': form
     }
-    
-    if request.method == 'POST':
-        objective = request.POST.get('objective')
-        scope = request.POST.get('scope')
-        concentration = request.POST.get('concentration')
-        volums = request.POST.get('volums')
-        ingradient = request.POST.get('ingradient')
-        spec_io = request.POST.get('spec_io')
-        spec_dates = request.POST.get('spec_dates')
-        procedure = request.POST.get('procedure')
-        calculation_details = request.POST.get('calculation_details')
-        conclusion = request.POST.get('conclusion')
-        initiation_date = timezone.now().date()
 
-        if not spec_dates:
-            spec_dates = None
-        
-        form = FormData(
-            objective=objective, 
-            scope=scope, 
-            concentration=concentration, 
-            volums=volums, 
-            ingradient=ingradient, 
-            spec_io=spec_io,
-            spec_dates=spec_dates,
-            procedure=procedure,
-            calculation_details=calculation_details,
-            conclusion=conclusion,
-            initiation_date=initiation_date
-        )
-        form.save()
-        return redirect('dashboard', form_id=form.id)
-
-    return render(request, 'edit.html', form_id=form.id)
+    return render(request, 'edit.html', context)
 
 def logoutUser(request):
     logout(request)
@@ -102,14 +89,16 @@ def form(request):
         volums = request.POST.get('volums')
         ingradient = request.POST.get('ingradient')
         spec_io = request.POST.get('spec_io')
-        spec_dates = request.POST.get('spec_dates')
+        spec_details = request.POST.get('spec_details')
         procedure = request.POST.get('procedure')
         calculation_details = request.POST.get('calculation_details')
         conclusion = request.POST.get('conclusion')
         initiation_date = timezone.now().date()
 
-        if not spec_dates:
-            spec_dates = None
+        # if not spec_details:
+        #     spec_details = None
+        
+        # print(spec_details, type(spec_details))
         
         form = FormData(
             objective=objective, 
@@ -118,14 +107,14 @@ def form(request):
             volums=volums, 
             ingradient=ingradient, 
             spec_io=spec_io,
-            spec_dates=spec_dates,
+            spec_details=spec_details,
             procedure=procedure,
             calculation_details=calculation_details,
             conclusion=conclusion,
             initiation_date=initiation_date
         )
         form.save()
-        return redirect('display', form_id=form.id)
+        return redirect('/dashboard/')
 
     return render(request, 'form.html')
 
@@ -149,11 +138,19 @@ def generate_pdf(request, form_id):
         'Volumes': form.volums,
         'Ingredient': form.ingradient,
         'Spec. IO': form.spec_io,
-        'Spec. Dates': form.spec_dates,
+        'Spec. Details': form.spec_details,
         'Procedure': form.procedure,
         'Calculation Details': form.calculation_details,
         'Conclusion': form.conclusion,
     }
+
+    for key, value in data.items():
+        if isinstance(value, datetime.date):
+            data[key] = value.strftime('%Y-%m-%d')
+
+    for key, value in data.items():
+        if value is None:
+            data[key] = ""
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="form_{form_id}.pdf"'
@@ -218,7 +215,7 @@ def generate_excel(request, form_id):
         'Volumes': form.volums,
         'Ingredient': form.ingradient,
         'Spec. IO': form.spec_io,
-        'Spec. Dates': form.spec_dates,
+        'Spec. Details': form.spec_details,
         'Procedure': form.procedure,
         'Calculation Details': form.calculation_details,
         'Conclusion': form.conclusion,

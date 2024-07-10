@@ -2,21 +2,21 @@
 
 {% block title %}Data - SmartExcel{% endblock title %}
 
-{% block head %} Form Data {% endblock head %}
-
 {% block logoutButton %}
     <a href="/logout" class="btn btn-danger text-pink f-medium">Log Out</a>
 {% endblock logoutButton %}
 
 {% block body %}
-    <div class="container">
-        <div class="d-flex justify-content-end gap-4 my-3 px-5">
-            <a href="/form" class="btn btn-info text-light" >Back</a>
-            <button class="btn btn-primary text-light" data-bs-toggle="modal" data-bs-target="#exportModal">Export Data</button>
-        </div>
-        <div class="px-5 my-4">
-            <div class="border rounded p-3">
-                <table class="table table-stripped">
+    <div class="d-flex justify-content-center my-3">
+        <div class="" style="width: 80%;">
+            <div class="d-flex justify-content-end gap-4 mb-3">
+                <a href="/dashboard/" class="btn btn-info text-light">Exit</a>
+                <a href="/form" class="btn btn-info text-light" >Back</a>
+                <button class="btn btn-primary text-light" data-bs-toggle="modal" data-bs-target="#exportModal">Export Data</button>
+            </div>
+            <div class="border rounded px-4 bg-light">
+                <div class="my-3 mx-2 fw-medium">Record Number: {{ form.id }}</div>
+                <table class="table">
                     <tr>
                         <th class="w-25">Field</th>
                         <th class="">Value</th>
@@ -46,8 +46,8 @@
                         <td id="spec_io">{{form.spec_io}}</td>
                     </tr>
                     <tr>
-                        <td>Spec. Dates</td>
-                        <td id="spec_dates">{{form.spec_dates}}</td>
+                        <td>Spec. Details</td>
+                        <td id="spec_details">{{form.spec_details}}</td>
                     </tr>
                     <tr>
                         <td>Procedure</td>

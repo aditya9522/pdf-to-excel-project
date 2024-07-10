@@ -7,7 +7,7 @@ class FormData(models.Model):
     volums = models.CharField(max_length=50) 
     ingradient = models.CharField(max_length=255)
     spec_io = models.CharField(max_length=255)
-    spec_dates = models.DateField(blank=True, null=True)
+    spec_details = models.CharField(max_length=255)
     procedure = models.CharField(max_length=255)
     calculation_details = models.CharField(max_length=255)
     conclusion = models.CharField(max_length=255)

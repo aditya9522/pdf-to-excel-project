@@ -2,8 +2,6 @@
 
 {% block title %}Update - SmartExcel{% endblock title %}
 
-{% block head %} Update Form {% endblock head %}
-
 {% block logoutButton %}
     <a href="/logout" class="btn btn-danger text-pink f-medium">Log Out</a>
 {% endblock logoutButton %}
@@ -13,56 +11,56 @@
         <form class="" method="POST" style="width: 80%;">
             {% csrf_token %}
             <div class="my-3 text-end">
-                <a href="/dashboard" class="btn btn-info text-light">Back</a>
-                <button type="submit" class="btn btn-info text-light">Save</button>
+                <a href="/dashboard" class="btn btn-info text-light mx-4">Back</a>
+                <button type="submit" class="btn btn-info text-light">Update</button>
             </div>
             <div class="border rounded p-4 bg-light">
                 <div class="mb-3">
                     <label for="objective" class="form-label">Objective</label>
-                    <input type="text" value="{{ objective }}" class="form-control border-gray border-2" id="objective" placeholder="" name="objective">
+                    <input type="text" value="{{ form.objective }}" class="form-control border-gray border-2" id="objective" placeholder="" name="objective">
                 </div>
                 <div class="mb-3">
                     <label for="scope" class="form-label">Scope</label>
-                    <input type="text" value="{{ scope }}" class="form-control border-gray border-2" id="scope" name="scope">
+                    <input type="text" value="{{ form.scope }}" class="form-control border-gray border-2" id="scope" name="scope">
                 </div>
                 <div class="mb-3">
                     <label for="concentration" class="form-label">Concentration</label>
-                    <input type="text" value="{{ concentration }}" class="form-control border-gray border-2" id="concentration" name="concentration">
+                    <input type="text" value="{{ form.concentration }}" class="form-control border-gray border-2" id="concentration" name="concentration">
                 </div>
                 <div class="row">
                     <div class="mb-3 col-6">
                         <label for="volums" class="form-label">Volums</label>
                         <select class="form-select border-gray border-2" aria-label="Default select example" id="volums" name="volums">
-                            <option value="" selected>Open this select menu</option>
-                            <option {% if volums == 'Volume 1' %} selected {% endif %} value="Volume 1">Volume 1</option>
-                            <option {% if volums == 'Volume 2' %} selected {% endif %} value="Volume 2">Volume 2</option>
-                            <option {% if volums == 'Volume 3' %} selected {% endif %} value="Volume 3">Volume 3</option>
+                            <option value="" {% if not form.volums %} selected {% endif %}>Open this select menu</option>
+                            <option {% if form.volums == 'Volume 1' %} selected {% endif %} value="Volume 1">Volume 1</option>
+                            <option {% if form.volums == 'Volume 2' %} selected {% endif %} value="Volume 2">Volume 2</option>
+                            <option {% if form.volums == 'Volume 3' %} selected {% endif %} value="Volume 3">Volume 3</option>
                         </select>
                     </div>
                     <div class="mb-3 col-6">
-                        <label for="spec_dates" class="form-label">Spec. Dates</label>
-                        <input type="date" value="{{ spec_dates }}" class="form-control border-gray border-2" id="spec_dates" name="spec_dates">
+                        <label for="spec_details" class="form-label">Spec. Details</label>
+                        <input type="text" value="{{ form.spec_details }}" class="form-control border-gray border-2" id="spec_details" name="spec_details">
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="ingradient" class="form-label">Ingradient</label>
-                    <input type="text" value="{{ ingradient }}" class="form-control border-gray border-2" id="ingradient" name="ingradient">
+                    <input type="text" value="{{ form.ingradient }}" class="form-control border-gray border-2" id="ingradient" name="ingradient">
                 </div>
                 <div class="mb-3">
                     <label for="spec_io" class="form-label">Spec. IO</label>
-                    <input type="text" value="{{ spec_io }}" class="form-control border-gray border-2" id="spec_io" name="spec_io">
+                    <input type="text" value="{{ form.spec_io }}" class="form-control border-gray border-2" id="spec_io" name="spec_io">
                 </div>
                 <div class="mb-3">
                     <label for="procedure" class="form-label">Procedure</label>
-                    <input type="text" value="{{ procedure }}" class="form-control border-gray border-2" id="procedure" name="procedure">
+                    <input type="text" value="{{ form.procedure }}" class="form-control border-gray border-2" id="procedure" name="procedure">
                 </div>
                 <div class="mb-3">
                     <label for="calculation_details" class="form-label">Calculation Details</label>
-                    <textarea type="text" class="form-control border-gray border-2" id="calculation_details" name="calculation_details" rows="3">{{ calculation_details }}</textarea>
+                    <textarea type="text" class="form-control border-gray border-2" id="calculation_details" name="calculation_details" rows="3">{{ form.calculation_details }}</textarea>
                 </div>
                 <div class="mb-3">
                     <label for="conclusion" class="form-label">Conclusion</label>
-                    <input type="text" value="{{ conclusion }}" class="form-control border-gray border-2" id="conclusion" name="conclusion">
+                    <input type="text" value="{{ form.conclusion }}" class="form-control border-gray border-2" id="conclusion" name="conclusion">
                 </div>
             </div>
         </form>
