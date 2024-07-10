@@ -36,10 +36,11 @@ def index(request):
 def dashboard(request):
     records = FormData.objects.all().values()
     data = list(records)
-
+    total_records = len(data)
     context = {
         'show': False,
-        'data': data
+        'data': data[::-1],
+        'total_records': total_records
     }
     if not request.user.is_authenticated:
         return redirect('/', context)
@@ -76,8 +77,14 @@ def logoutUser(request):
     return redirect('/')
 
 def form(request):
+    if FormData.objects.last():
+        record_number = FormData.objects.last().id + 1
+    else:
+        record_number =  1
+
     context = {
-        'show': False
+        'show': False,
+        'record_number': record_number
     }
     if not request.user.is_authenticated:
         return redirect('/', context)
@@ -95,11 +102,6 @@ def form(request):
         conclusion = request.POST.get('conclusion')
         initiation_date = timezone.now().date()
 
-        # if not spec_details:
-        #     spec_details = None
-        
-        # print(spec_details, type(spec_details))
-        
         form = FormData(
             objective=objective, 
             scope=scope, 
@@ -116,7 +118,7 @@ def form(request):
         form.save()
         return redirect('/dashboard/')
 
-    return render(request, 'form.html')
+    return render(request, 'form.html', context)
 
 def display(request, form_id):
     if not request.user.is_authenticated:

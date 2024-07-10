@@ -2,19 +2,16 @@
 
 {% block title %}Update - SmartExcel{% endblock title %}
 
-{% block logoutButton %}
-    <a href="/logout" class="btn btn-danger text-pink f-medium">Log Out</a>
-{% endblock logoutButton %}
-
 {% block body %}
     <div class="d-flex justify-content-center my-3">
         <form class="" method="POST" style="width: 80%;">
             {% csrf_token %}
             <div class="my-3 text-end">
-                <a href="/dashboard" class="btn btn-info text-light mx-4">Back</a>
-                <button type="submit" class="btn btn-info text-light">Update</button>
+                <a href="/dashboard" class="btn btn-info text-light mx-4 shadow">Back</a>
+                <button type="submit" class="btn btn-info text-light shadow">Update</button>
             </div>
-            <div class="border rounded p-4 bg-light">
+            <div class="border shadow rounded px-4 bg-light">
+                <div class="my-3 fw-medium">Record Number: {{ form.id }}</div>
                 <div class="mb-3">
                     <label for="objective" class="form-label">Objective</label>
                     <input type="text" value="{{ form.objective }}" class="form-control border-gray border-2" id="objective" placeholder="" name="objective">

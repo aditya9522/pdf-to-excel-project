@@ -2,19 +2,15 @@
 
 {% block title %}Data - SmartExcel{% endblock title %}
 
-{% block logoutButton %}
-    <a href="/logout" class="btn btn-danger text-pink f-medium">Log Out</a>
-{% endblock logoutButton %}
-
 {% block body %}
-    <div class="d-flex justify-content-center my-3">
+    <div class="d-flex justify-content-center my-4">
         <div class="" style="width: 80%;">
             <div class="d-flex justify-content-end gap-4 mb-3">
                 <a href="/dashboard/" class="btn btn-info text-light">Exit</a>
-                <a href="/form" class="btn btn-info text-light" >Back</a>
+                <a href="/dashboard/" class="btn btn-info text-light" >Back</a>
                 <button class="btn btn-primary text-light" data-bs-toggle="modal" data-bs-target="#exportModal">Export Data</button>
             </div>
-            <div class="border rounded px-4 bg-light">
+            <div class="border shadow rounded px-4 bg-light">
                 <div class="my-3 mx-2 fw-medium">Record Number: {{ form.id }}</div>
                 <table class="table">
                     <tr>
