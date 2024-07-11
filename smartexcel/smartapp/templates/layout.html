@@ -11,7 +11,7 @@
 </head>
 <body>
     <header>
-        <div class="d-flex justify-content-between text-start px-5 bg-info text-light py-2">
+        <div class="d-flex justify-content-between text-start px-5 bg-secondary-subtle text-light py-2">
             <div class=""><img src="{% static "images/logo.png" %}" alt="logo" width="150" height="50"></div>
             <div class="d-flex gap-1 justify-content-center align-items-center">
                 <dic class="">
@@ -21,26 +21,65 @@
                     </span>
                 </dic>
                 <div class="dropdown">
-                    <button class="btn btn-info dropdown-toggle fs-5 bg-info border-0 fw-medium text-dark" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-secondary-subtle dropdown-toggle fs-5 bg-secondary-subtle border-0 fw-medium text-dark" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                       Admin
                     </button>
                     <div class="dropdown-menu dropdown-menu-start">
                       <div class="d-flex justify-content-center align-items-center px-5 h5 gap-2"><img src="{% static "images/logosm.png" %}" alt="logo" width="50" height="50"> Admin</div>
                       <div class="dropdown-divider"></div>
-                      {% comment %} <div><a class="dropdown-item" href="#">About</a></div> {% endcomment %}
-                      <div><a class="dropdown-item mx-3" href="/logout"><img src="{% static "images/logout.png" %}" alt="logout" width="20" height="20">&nbsp; Log Out</a></div>
+                      <div><a class="mx-2 dropdown-item" href="#"> ◆ &nbsp; About</a></div>
+                      <div><a class="mx-2 dropdown-item" href="#"> ◆ &nbsp; Feedback</a></div>
+                      <div><a class="mx-2 dropdown-item px-3" href="/logout"><img src="{% static "images/logout.png" %}" alt="logout" width="15" height="15">&nbsp; Log Out</a></div>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
+    <button type="button" class="btn btn-secondary-subtle" id="liveToastBtn" hidden></button>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        {% if messages %}
+        {% for message in messages %}
+        <div id="liveToast" class="toast bg-{{ message.tags }}" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+            <img src="{% static "images/logosm.png" %}" width="25" height="25" class="rounded me-2" alt="logo">
+            <strong class="me-auto">VidyaGxP</strong>
+            <small>Just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body text-light fw-medium">
+                {{ message }}
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
     <main>
         {% block body %}{% endblock body %}
     </main>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
+
+    <script>
+        const toastTrigger = document.getElementById('liveToastBtn')
+        const toastLiveExample = document.getElementById('liveToast')
+
+        if (toastTrigger) {
+        const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
+        toastTrigger.addEventListener('click', () => {
+            toastBootstrap.show()
+        })
+        }
+
+        {% if message %}
+            document.getElementById('liveToastBtn').click()
+        {% endif %}
+
+    </script>    
+    
 </body>
 </html>

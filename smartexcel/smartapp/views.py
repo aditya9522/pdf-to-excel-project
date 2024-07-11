@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
@@ -13,6 +14,7 @@ import io
 import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
+import pandas as pd
 
 
 def index(request): 
@@ -22,11 +24,13 @@ def index(request):
         user = authenticate(request, username = userid, password = password)
         if user is not None:
             login(request, user)
+            messages.success(request, 'Login Successfully.')
             return redirect('dashboard/')
         else:
             context = {
                 'show': False
             }
+            messages.error(request, 'Invalid credencial.')
             return render(request, 'index.html', context)
     context = {
         'show': False
@@ -40,12 +44,60 @@ def dashboard(request):
     context = {
         'show': False,
         'data': data[::-1],
-        'total_records': total_records
+        'total_records': total_records,
     }
     if not request.user.is_authenticated:
         return redirect('/', context)
  
     return render(request, 'dashboard.html', context)
+
+def bulkAction(request):
+    if request.method == 'POST':
+        attachmentCount = int(request.POST.get('rows'))
+        bulk_dir = os.path.join(settings.BASE_DIR, 'bulk-files')
+        os.makedirs(bulk_dir, exist_ok=True)
+
+        # List to store dictionaries representing each row of the combined DataFrame
+        data_list = []
+
+        # Iterate over each uploaded file
+        for i in range(1, attachmentCount + 1):
+            file_object = request.FILES.get(f'attachment_{i}')
+            if file_object:
+                file_path = os.path.join(bulk_dir, file_object.name)
+                
+                # Save uploaded file to disk
+                with open(file_path, 'wb') as destination:
+                    for chunk in file_object.chunks():
+                        destination.write(chunk)
+
+                # Read Excel file into a DataFrame
+                df = pd.read_excel(file_path)
+
+                # Transform DataFrame to a dictionary and add the 'Sheet Name' column
+                row_dict = {'Sheet Name': f'Sheet {i}'}
+                for _, row in df.iterrows():
+                    row_dict[row['Field']] = row['Value']
+                
+                data_list.append(row_dict)
+
+                # Optionally, remove the file from disk after reading
+                os.remove(file_path)
+        
+        # Convert the list of dictionaries to a DataFrame
+        combined_df = pd.DataFrame(data_list)
+
+        # Write combined DataFrame to a new Excel file
+        combined_file_path = os.path.join(bulk_dir, 'combined.xlsx')
+        combined_df.to_excel(combined_file_path, index=False)
+
+        if os.path.exists(combined_file_path):
+            with open(combined_file_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=combined.xlsx'
+            return response
+
+    return redirect('dashboard')
 
 def update(request, form_id):
     if request.method == 'POST':

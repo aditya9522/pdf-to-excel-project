@@ -10,7 +10,10 @@
     <div class="border shadow rounded p-4 bg-light mt-2" style="width: 80%;">
         <div class="d-flex justify-content-between">
             <div class="bg-white rounded p-2 text-dark fw-medium">Total Records : {{ total_records }}</div>
-            <a href="/form/" class="btn btn-info text-light shadow">Create Record</a>
+            <div class="">
+                <button type="button" class="btn btn-primary mx-4" data-bs-toggle="modal" data-bs-target="#bulkmodal">Export Bulk Data</button>
+                <a href="/form/" class="btn btn-success text-light shadow">Create Record</a>
+            </div>
         </div>
         {% if data %}
         <table class="table table-bordered mt-4">
@@ -35,6 +38,62 @@
         <div class="text-center h3 mt-5">Records not available</div>
         {% endif %}
     </div>
+
+    <div class="modal fade" id="bulkmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Export Bulk Data</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="fw-medium">Import the data files from the system. </p>
+              <form action="{% url "bulk-action" %}" method="POST" enctype="multipart/form-data">
+                <div class="d-flex gap-5 mb-3">
+                    <div class="w-75">
+                        <label for="rows" class="form-label">Number of attachments</label>
+                        <input type="number" name="rows" class="form-control" id="rows" placeholder="Enter no of attachments">
+                    </div>
+                    <div class="mt-4 pt-2">
+                        <button type="button" class="btn btn-light bg-secondary-subtle" onclick="generateRows()">Generate</button>
+                    </div>
+                </div>
+
+                <div class="border rounded p-3" id="fieldForm">
+                    {% csrf_token %}
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+            </div>
+          </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    function generateRows() {
+        const row = document.getElementById('rows').value;
+
+        if ( row <= '0' ) {
+            return
+        }
+
+        const form = document.getElementById('fieldForm');
+
+        document.querySelectorAll('.previous').forEach( field => field.remove());
+        
+        let html = '';
+
+        for (let i = 1; i <= row; i++) {
+          html += `<div class="mb-3 previous"><label for="attachment_${i}" class="form-label">Attachment ${i}</label><input type="file" required name="attachment_${i}" class="form-control" id="attachment_${i}"></div>`;
+        }
+
+        html += `<div class="mt-4  previous"><button type="submit" class="btn btn-success">Combine Files and Download</button></div>`;
+        
+        form.innerHTML += html;
+    }
+</script>
 
 {% endblock body %}    
