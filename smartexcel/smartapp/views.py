@@ -3,6 +3,7 @@ from django.contrib import messages
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
+from django.urls import reverse
 import textwrap
 from django.conf import settings
 from django.http import HttpResponse
@@ -24,7 +25,6 @@ def index(request):
         user = authenticate(request, username = userid, password = password)
         if user is not None:
             login(request, user)
-            messages.success(request, 'Login Successfully.')
             return redirect('dashboard/')
         else:
             context = {
@@ -47,24 +47,26 @@ def dashboard(request):
         'total_records': total_records,
     }
     if not request.user.is_authenticated:
+        messages.warning(request, "Login Required!")
         return redirect('/', context)
- 
+
+    messages.success(request, 'Logged in Successfully.')
     return render(request, 'dashboard.html', context)
 
-def bulkAction(request):
+def bulkExcel(request):
     if request.method == 'POST':
         attachmentCount = int(request.POST.get('rows'))
-        bulk_dir = os.path.join(settings.BASE_DIR, 'bulk-files')
-        os.makedirs(bulk_dir, exist_ok=True)
+        excel_dir = os.path.join(settings.BASE_DIR, 'Excel-Files')
+        os.makedirs(excel_dir, exist_ok=True)
 
         # List to store dictionaries representing each row of the combined DataFrame
         data_list = []
 
         # Iterate over each uploaded file
         for i in range(1, attachmentCount + 1):
-            file_object = request.FILES.get(f'attachment_{i}')
+            file_object = request.FILES.get(f'attachment_excel_{i}')
             if file_object:
-                file_path = os.path.join(bulk_dir, file_object.name)
+                file_path = os.path.join(excel_dir, file_object.name)
                 
                 # Save uploaded file to disk
                 with open(file_path, 'wb') as destination:
@@ -75,7 +77,7 @@ def bulkAction(request):
                 df = pd.read_excel(file_path)
 
                 # Transform DataFrame to a dictionary and add the 'Sheet Name' column
-                row_dict = {'Sheet Name': f'Sheet {i}'}
+                row_dict = {'Sheet Name': file_object.name}
                 for _, row in df.iterrows():
                     row_dict[row['Field']] = row['Value']
                 
@@ -88,16 +90,65 @@ def bulkAction(request):
         combined_df = pd.DataFrame(data_list)
 
         # Write combined DataFrame to a new Excel file
-        combined_file_path = os.path.join(bulk_dir, 'combined.xlsx')
+        combined_file_path = os.path.join(excel_dir, 'Combined-Excel-Sheet.xlsx')
         combined_df.to_excel(combined_file_path, index=False)
 
         if os.path.exists(combined_file_path):
             with open(combined_file_path, 'rb') as f:
                 response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                response['Content-Disposition'] = 'attachment; filename=combined.xlsx'
+                response['Content-Disposition'] = 'attachment; filename=Combined-Excel-Sheet.xlsx'
             return response
 
     return redirect('dashboard')
+
+def bulkPDF(request):
+    if request.method == 'POST':
+        attachmentCount = int(request.POST.get('rows'))
+        pdf_dir = os.path.join(settings.BASE_DIR, 'PDF-Files')
+        os.makedirs(pdf_dir, exist_ok=True)
+        data_list = []
+
+        for i in range(1, attachmentCount + 1):
+            file_object = request.FILES.get(f'attachment_pdf_{i}')
+            if file_object:
+                file_path = os.path.join(pdf_dir, file_object.name)
+
+                # saving file temp.
+                with open(file_path, 'wb') as temp_pdf:
+                    for chunk in file_object.chunks():
+                        temp_pdf.write(chunk)
+            
+                workbook = pdf_to_excel(file_path)
+                # Remove the temporary PDF file
+                os.remove(file_path)
+
+                excel_path = file_path.replace('.pdf', '.xlsx')
+                workbook.save(excel_path)
+
+                # Now storing excel data to single sheet
+                df = pd.read_excel(excel_path)
+
+                # Transform DataFrame to a dictionary and add the 'Sheet Name' column
+                row_dict = {'File Name': file_object.name}
+                for _, row in df.iterrows():
+                    row_dict[row['Field']] = row['Value']
+                
+                data_list.append(row_dict)
+
+        # Convert the list of dictionaries to a DataFrame
+        combined_df = pd.DataFrame(data_list)
+
+        # Write combined DataFrame to a new Excel file
+        combined_file_path = os.path.join(pdf_dir, 'Combined-Data-Sheet.xlsx')
+        combined_df.to_excel(combined_file_path, index=False)
+
+        if os.path.exists(combined_file_path):
+            with open(combined_file_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=Combined-Data-Sheet.xlsx'
+            return response
+
+    return  redirect('dashboard')
 
 def update(request, form_id):
     if request.method == 'POST':
@@ -113,8 +164,14 @@ def update(request, form_id):
         form.procedure = request.POST.get('procedure', '')
         form.calculation_details = request.POST.get('calculation_details', '')
         form.conclusion = request.POST.get('conclusion', '')
-        form.save()
 
+        if not form.objective:
+            messages.warning(request, "The objective is required!")
+            update_url = reverse('update', args=[form_id])
+            return redirect(update_url)
+        
+        form.save()
+        messages.success(request, "Record updated successfully.")
         return redirect('dashboard')
     
     form = FormData.objects.get(id=form_id) 
@@ -139,6 +196,7 @@ def form(request):
         'record_number': record_number
     }
     if not request.user.is_authenticated:
+        messages.warning(request, "Login Required!")
         return redirect('/', context)
 
     if request.method == 'POST':
@@ -154,6 +212,10 @@ def form(request):
         conclusion = request.POST.get('conclusion')
         initiation_date = timezone.now().date()
 
+        if not objective:
+            messages.warning(request, "The objective is required!")
+            return redirect('/form/')
+
         form = FormData(
             objective=objective, 
             scope=scope, 
@@ -168,6 +230,7 @@ def form(request):
             initiation_date=initiation_date
         )
         form.save()
+        messages.success(request, "Record created successfully.")
         return redirect('/dashboard/')
 
     return render(request, 'form.html', context)
@@ -335,3 +398,7 @@ def export_excel(request, form_id):
         
         return response
     return redirect('form', form_id=form_id)
+
+
+def custom_404(request, exception):
+    return render(request, 'unknown.html', status=404)

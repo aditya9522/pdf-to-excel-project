@@ -2,6 +2,10 @@
 
 {% block title %}Dashboard - SmartExcel{% endblock title %}
 
+{% block toast %}
+    {% include "toast.html" with messages=messages %}
+{% endblock toast %}
+
 {% block body %}
 
 {% load static %}
@@ -47,22 +51,54 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <p class="fw-medium">Import the data files from the system. </p>
-              <form action="{% url "bulk-action" %}" method="POST" enctype="multipart/form-data">
-                <div class="d-flex gap-5 mb-3">
-                    <div class="w-75">
-                        <label for="rows" class="form-label">Number of attachments</label>
-                        <input type="number" name="rows" class="form-control" id="rows" placeholder="Enter no of attachments">
+                <p class="fw-medium">Import the data files from the system. </p>
+                <label for="uploadType" class="form-label">Attachment Type</label>
+                <div class="radio mx-3 mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="attachmentType" id="PDF" checked onclick="toggleForms()">
+                        <label class="form-check-label" for="PDF">
+                            PDF
+                        </label>
                     </div>
-                    <div class="mt-4 pt-2">
-                        <button type="button" class="btn btn-light bg-secondary-subtle" onclick="generateRows()">Generate</button>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="attachmentType" id="Excel" onclick="toggleForms()">
+                        <label class="form-check-label" for="Excel">
+                            Excel
+                        </label>
                     </div>
                 </div>
-
-                <div class="border rounded p-3" id="fieldForm">
-                    {% csrf_token %}
+                <div id="displayForm">
+                    <form action="{% url 'bulk-excel' %}" method="POST" enctype="multipart/form-data" id="excelForm">
+                        <div class="d-flex gap-5 mb-3">
+                            <div class="w-75">
+                                <label for="rows" class="form-label">Number of Excel Attachments</label>
+                                <input type="number" name="rows" class="form-control" id="rowsExcel" placeholder="Enter no of attachments">
+                            </div>
+                            <div class="mt-4 pt-2">
+                                <button type="button" class="btn btn-light bg-secondary-subtle" onclick="generateRows('excel')">Generate</button>
+                            </div>
+                        </div>
+            
+                        <div class="border rounded p-3" id="fieldFormExcel">
+                            {% csrf_token %}
+                        </div>
+                    </form>
+                    <form action="{% url 'bulk-pdf' %}" method="POST" enctype="multipart/form-data" id="pdfForm" style="display:none;">
+                        <div class="d-flex gap-5 mb-3">
+                            <div class="w-75">
+                                <label for="rows" class="form-label">Number of PDF Attachments</label>
+                                <input type="number" name="rows" class="form-control" id="rowsPDF" placeholder="Enter no of attachments">
+                            </div>
+                            <div class="mt-4 pt-2">
+                                <button type="button" class="btn btn-light bg-secondary-subtle" onclick="generateRows('pdf')">Generate</button>
+                            </div>
+                        </div>
+            
+                        <div class="border rounded p-3" id="fieldFormPDF">
+                            {% csrf_token %}
+                        </div>
+                    </form>
                 </div>
-              </form>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
@@ -73,27 +109,40 @@
 </div>
 
 <script>
-    function generateRows() {
-        const row = document.getElementById('rows').value;
+    function toggleForms() {
+        const isPDFSelected = document.getElementById('PDF').checked;
+        const pdfForm = document.getElementById('pdfForm');
+        const excelForm = document.getElementById('excelForm');
+        
+        if (isPDFSelected) {
+            pdfForm.style.display = 'block';
+            excelForm.style.display = 'none';
+        } else {
+            pdfForm.style.display = 'none';
+            excelForm.style.display = 'block';
+        }
+    }
+
+    function generateRows(type) {
+        const row = type === 'pdf' ? document.getElementById('rowsPDF').value : document.getElementById('rowsExcel').value;
+        const form = type === 'pdf' ? document.getElementById('fieldFormPDF') : document.getElementById('fieldFormExcel');
+        document.querySelectorAll('.previous').forEach( field => field.remove());
+        let html = '';
 
         if ( row <= '0' ) {
             return
         }
 
-        const form = document.getElementById('fieldForm');
-
-        document.querySelectorAll('.previous').forEach( field => field.remove());
-        
-        let html = '';
-
         for (let i = 1; i <= row; i++) {
-          html += `<div class="mb-3 previous"><label for="attachment_${i}" class="form-label">Attachment ${i}</label><input type="file" required name="attachment_${i}" class="form-control" id="attachment_${i}"></div>`;
+            html += `<div class="mb-3 previous"><label for="attachment_${type}_${i}" class="form-label">Attachment ${i}</label><input type="file" required name="attachment_${type}_${i}" class="form-control" id="attachment_${type}_${i}"></div>`;
         }
 
-        html += `<div class="mt-4  previous"><button type="submit" class="btn btn-success">Combine Files and Download</button></div>`;
-        
+        html += `<div class="mt-4 previous"><button type="submit" class="btn btn-success">Combine Data and Download</button></div>`;
+
         form.innerHTML += html;
     }
+
+    document.addEventListener('DOMContentLoaded', toggleForms);
 </script>
 
 {% endblock body %}    

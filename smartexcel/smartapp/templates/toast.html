@@ -1,0 +1,35 @@
+{% load static %}
+
+<button type="button" class="btn btn-secondary-subtle d-none" id="liveToastBtn"></button>
+
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    {% if messages %}
+    {% for message in messages %}
+    <div id="liveToast" class="toast bg-{{ message.tags }}" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <img src="{% static 'images/logosm.png' %}" width="25" height="25" class="rounded me-2" alt="logo">
+            <strong class="me-auto">VidyaGxP</strong>
+            <small>Just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body text-light fw-medium">
+            {{ message }}
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const toastTrigger = document.getElementById('liveToastBtn');
+        const toasts = document.querySelectorAll('#liveToast');
+
+        if (toastTrigger && toasts.length > 0) {
+            toasts.forEach(toast => {
+                const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toast);
+                toastBootstrap.show();
+            });
+        }
+    });
+</script>

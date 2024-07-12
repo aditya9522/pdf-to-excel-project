@@ -4,7 +4,8 @@ from smartapp import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('bulk-action', views.bulkAction, name='bulk-action'),
+    path('bulk-pdf', views.bulkPDF, name='bulk-pdf'),
+    path('bulk-excel', views.bulkExcel, name='bulk-excel'),
     path('update/<int:form_id>/', views.update, name='update'),
     path('logout/', views.logoutUser, name='logout'),  
     path('form/', views.form, name='form'),

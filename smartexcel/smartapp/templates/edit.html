@@ -2,6 +2,10 @@
 
 {% block title %}Update - SmartExcel{% endblock title %}
 
+{% block toast %}
+    {% include "toast.html" with messages=messages %}
+{% endblock toast %}
+
 {% block body %}
     <div class="d-flex justify-content-center my-3">
         <form class="" method="POST" style="width: 80%;">
@@ -14,7 +18,8 @@
                 <div class="my-3 fw-medium">Record Number: {{ form.id }}</div>
                 <div class="mb-3">
                     <label for="objective" class="form-label">Objective</label>
-                    <input type="text" value="{{ form.objective }}" class="form-control border-gray border-2" id="objective" placeholder="" name="objective">
+                    <input type="text" value="{{ form.objective }}" class="form-control border-gray border-2 {% if messages %} is-invalid {% endif %}" id="objective" placeholder="" name="objective">
+                    {% if messages %}<span class="text-body-tertiary mx-1">Objective field can not be empty!</span>{% endif %}
                 </div>
                 <div class="mb-3">
                     <label for="scope" class="form-label">Scope</label>

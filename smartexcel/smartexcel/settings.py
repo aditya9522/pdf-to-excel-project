@@ -26,8 +26,7 @@ SECRET_KEY = 'django-insecure-*cuxi-zen0wa1imp=#d_od4aow6gioi@o7q#o16d1u#-0=0-q%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['vidyagxp.com', 'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -50,6 +49,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 ROOT_URLCONF = 'smartexcel.urls'
 
