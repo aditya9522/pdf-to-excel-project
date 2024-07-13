@@ -11,51 +11,71 @@
                 <button class="btn btn-primary text-light" data-bs-toggle="modal" data-bs-target="#exportModal">Export Data</button>
             </div>
             <div class="border shadow rounded p-4 bg-light">
-                <span class="bg-white rounded py-2 px-3 text-dark fw-medium">STP ID : {{ form.id }}</span>
+                {% comment %} <span class="bg-white rounded py-2 px-3 text-dark fw-medium">STP ID : {{ form.stp_id }}</span> {% endcomment %}
                 <table class="table mt-3">
                     <tr>
                         <th class="w-25">Field</th>
                         <th class="">Value</th>
                     </tr>
                     <tr>
-                        <td>Objective</td>
+                        <td>STP ID</td>
                         <td id="objective">{{form.objective}}</td>
                     </tr>
                     <tr>
-                        <td>Scope</td>
-                        <td id="scope">{{form.scope}}</td>
+                        <td>Product Name</td>
+                        <td id="scope">{{form.product_name}}</td>
                     </tr>
                     <tr>
-                        <td>Concentration</td>
-                        <td id="concentration">{{form.concentration}}</td>
+                        <td>Batch Number</td>
+                        <td id="concentration">{{form.batch_number}}</td>
                     </tr>
                     <tr>
-                        <td>Volumes</td>
-                        <td id="volums">{{form.volums}}</td>
+                        <td>Manufacture Date</td>
+                        <td id="volums">{{form.manufacture_date}}</td>
                     </tr>
                     <tr>
-                        <td>Ingredient</td>
-                        <td id="ingradient">{{form.ingradient}}</td>
+                        <td>Expiry Date</td>
+                        <td id="ingradient">{{form.expiry_date}}</td>
                     </tr>
                     <tr>
-                        <td>Spec. IO</td>
-                        <td id="spec_io">{{form.spec_io}}</td>
+                        <td>Active Ingredient Concentration</td>
+                        <td id="spec_io">{{form.active_ingredient_concentration}}</td>
                     </tr>
                     <tr>
-                        <td>Spec. Details</td>
-                        <td id="spec_details">{{form.spec_details}}</td>
+                        <td>Capsule Size</td>
+                        <td id="spec_details">{{form.dessolution_test}}</td>
                     </tr>
                     <tr>
-                        <td>Procedure</td>
-                        <td id="procedure">{{form.procedure}}</td>
+                        <td>Dessolution Test</td>
+                        <td id="procedure">{{form.dessolution_test}}</td>
                     </tr>
                     <tr>
-                        <td>Calculation Details</td>
-                        <td id="calculation_details">{{form.calculation_details}}</td>
+                        <td>Hardness Test</td>
+                        <td id="calculation_details">{{form.hardness_test}}</td>
                     </tr>
                     <tr>
-                        <td>Conclusion</td>
-                        <td id="conclusion">{{form.conclusion}}</td>
+                        <td>Moisture Content</td>
+                        <td id="conclusion">{{form.moisture_content}}</td>
+                    </tr>
+                    <tr>
+                        <td>Uniformity of Dosage Unit</td>
+                        <td id="conclusion">{{form.dosage_unit_uniformiry}}</td>
+                    </tr>
+                    <tr>
+                        <td>Appearance</td>
+                        <td id="conclusion">{{form.appearance}}</td>
+                    </tr>
+                    <tr>
+                        <td>Packaging Integrity</td>
+                        <td id="conclusion">{{form.packaging_integrity}}</td>
+                    </tr>
+                    <tr>
+                        <td>Storage Conditions</td>
+                        <td id="conclusion">{{form.storage_conditions}}</td>
+                    </tr>
+                    <tr>
+                        <td>Stability Testing</td>
+                        <td id="conclusion">{{form.stability_testing}}</td>
                     </tr>
                 </table>
             </div>
@@ -72,11 +92,11 @@
                 <div class="modal-body">
                     <p class="fw-medium">Choose format to export:</p>
                     <div class="d-flex justify-content-around mb-4">
-                        <a href = "{% url 'download' stp_id=form.id %}" class="btn btn-primary">Export as PDF</a>
-                        <a href = "{% url 'download-excel' stp_id=form.id %}" class="btn btn-success">Export as Excel</a>
+                        <a href = "{% url 'download' stp_id=form.stp_id %}" class="btn btn-primary">Export as PDF</a>
+                        <a href = "{% url 'download-excel' stp_id=form.stp_id %}" class="btn btn-success">Export as Excel</a>
                     </div>
                     <p class="fw-medium">Convert pdf to excel : <br> 1. Upload the pdf file from your local system. <br> 2. Download Excel Sheet.</p>
-                    <form id="pdfUploadForm" action="{% url 'export-excel' stp_id=form.id %}" method="POST" enctype="multipart/form-data">
+                    <form id="pdfUploadForm" action="{% url 'export-excel' stp_id=form.stp_id %}" method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="pdf" class="form-label">Upload file :</label>

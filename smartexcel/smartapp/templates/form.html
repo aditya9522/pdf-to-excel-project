@@ -15,21 +15,22 @@
                 <button type="submit" class="btn btn-info text-light shadow">Save</button>
             </div>
             <div class="border shadow rounded px-4 bg-light">
-                <div class="my-3 fw-medium">Record Number: {{ record_number }}</div>
-                <div class="mb-3">
-                    <label for="objective" class="form-label">Objective</label>
-                    <input type="text" class="form-control border-gray border-2 {% if messages %} is-invalid {% endif %}" id="objective" placeholder="" name="objective">
-                    {% if messages %}<span class="text-body-tertiary mx-1">Objective field can not be empty!</span>{% endif %}
+                <div class="mb-3 row">
+                    <div class="col-6">
+                        <label for="stp_id" class="form-label">STP ID</label>
+                        <input type="text" class="form-control border-gray border-2 {% if messages %} is-invalid {% endif %}" id="stp_id" name="stp_id">
+                        {% if messages %}<span class="text-body-tertiary mx-1">Objective field can not be empty!</span>{% endif %}
+                    </div>
+                    <div class="col-6">
+                        <label for="batch_number" class="form-label">Batch Number</label>
+                        <input type="text" class="form-control border-gray border-2" id="batch_number" name="batch_number">
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label for="scope" class="form-label">Scope</label>
-                    <input type="text" class="form-control border-gray border-2" id="scope" name="scope">
+                    <label for="product_name" class="form-label">Product Name</label>
+                    <input type="text" class="form-control border-gray border-2" id="product_name" name="product_name">
                 </div>
-                <div class="mb-3">
-                    <label for="concentration" class="form-label">Concentration</label>
-                    <input type="text" class="form-control border-gray border-2" id="concentration" name="concentration">
-                </div>
-                <div class="row">
+                {% comment %} <div class="row">
                     <div class="mb-3 col-6">
                         <label for="volums" class="form-label">Volums</label>
                         <select class="form-select border-gray border-2" aria-label="Default select example" id="volums" name="volums">
@@ -43,26 +44,57 @@
                         <label for="spec_details" class="form-label">Spec. Details</label>
                         <input type="text" class="form-control border-gray border-2" id="spec_details" name="spec_details">
                     </div>
+                </div> {% endcomment %}
+                <div class="mb-3 row">
+                    <div class="col-6">
+                        <label for="manufacture_date" class="form-label">Manufacture Date</label>
+                        <input type="date" class="form-control border-gray border-2" id="manufacture_date" name="manufacture_date">
+                    </div>
+                    <div class="col-6">
+                        <label for="expiry_date" class="form-label">Expiry Date</label>
+                        <input type="text" class="form-control border-gray border-2 {% if messages %} is-invalid {% endif %}" id="expiry_date" name="expiry_date">
+                        {% if messages %}<span class="text-body-tertiary mx-1">Objective field can not be empty!</span>{% endif %}
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label for="ingradient" class="form-label">Ingradient</label>
-                    <input type="text" class="form-control border-gray border-2" id="ingradient" name="ingradient">
+                    <label for="active_ingredient_concentration" class="form-label">Active Ingredient Concentration</label>
+                    <input type="text" class="form-control border-gray border-2" id="active_ingredient_concentration" name="active_ingredient_concentration">
                 </div>
                 <div class="mb-3">
-                    <label for="spec_io" class="form-label">Spec. IO</label>
-                    <input type="text" class="form-control border-gray border-2" id="spec_io" name="spec_io">
+                    <label for="capsule_size" class="form-label">Capsule Size</label>
+                    <input type="text" class="form-control border-gray border-2" id="capsule_size" name="capsule_size">
                 </div>
                 <div class="mb-3">
-                    <label for="procedure" class="form-label">Procedure</label>
-                    <input type="text" class="form-control border-gray border-2" id="procedure" name="procedure">
+                    <label for="dessolution_test" class="form-label">Dessolution Test</label>
+                    <input type="text" class="form-control border-gray border-2" id="dessolution_test" name="dessolution_test">
                 </div>
                 <div class="mb-3">
-                    <label for="calculation_details" class="form-label">Calculation Details</label>
-                    <textarea type="text" class="form-control border-gray border-2" id="calculation_details" name="calculation_details" rows="3"></textarea>
+                    <label for="hardness_test" class="form-label">Hardness Test</label>
+                    <input type="text" class="form-control border-gray border-2" id="hardness_test" name="hardness_test">
                 </div>
                 <div class="mb-3">
-                    <label for="conclusion" class="form-label">Conclusion</label>
-                    <input type="text" class="form-control border-gray border-2" id="conclusion" name="conclusion">
+                    <label for="moisture_content" class="form-label">Moisture Content</label>
+                    <input type="text" class="form-control border-gray border-2" id="moisture_content" name="moisture_content">
+                </div>
+                <div class="mb-3">
+                    <label for="dosage_unit_uniformiry" class="form-label">Uniformity of Dosage Unit</label>
+                    <input type="text" class="form-control border-gray border-2" id="dosage_unit_uniformiry" name="dosage_unit_uniformiry">
+                </div>
+                <div class="mb-3">
+                    <label for="appearance" class="form-label">Appearance</label>
+                    <input type="text" class="form-control border-gray border-2" id="appearance" name="appearance">
+                </div>
+                <div class="mb-3">
+                    <label for="packaging_integrity" class="form-label">Packaging Integrity</label>
+                    <input type="text" class="form-control border-gray border-2" id="packaging_integrity" name="packaging_integrity">
+                </div>
+                <div class="mb-3">
+                    <label for="storage_conditions" class="form-label">Storage Conditions</label>
+                    <input type="text" class="form-control border-gray border-2" id="storage_conditions" name="storage_conditions">
+                </div>
+                <div class="mb-3">
+                    <label for="stability_testing" class="form-label">Stability Testing</label>
+                    <input type="text" class="form-control border-gray border-2" id="stability_testing" name="stability_testing">
                 </div>
             </div>
         </form>

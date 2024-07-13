@@ -29,22 +29,16 @@ def index(request):
             messages.success(request, 'Logged in Successfully.')
             return redirect('dashboard/')
         else:
-            context = {
-                'show': False
-            }
             messages.error(request, 'Invalid credencials.')
-            return render(request, 'index.html', context)
-    context = {
-        'show': False
-    }
-    return render(request, 'index.html', context)
+            return render(request, 'index.html')
+    
+    return render(request, 'index.html')
 
 def dashboard(request):
     records = FormData.objects.all().values()
     data = list(records)
     total_records = len(data)
     context = {
-        'show': False,
         'data': data[::-1],
         'total_records': total_records,
     }
@@ -154,20 +148,24 @@ def bulkPDF(request):
 def update(request, stp_id):
     if request.method == 'POST':
         #spec_details = datetime.datetime.strptime(spec_details, '%Y-%m-%d').date()
-        form = get_object_or_404(FormData, id=stp_id) 
-        form.objective = request.POST.get('objective', '')
-        form.scope = request.POST.get('scope', '')
-        form.concentration = request.POST.get('concentration', '')
-        form.volums = request.POST.get('volums', '')
-        form.ingradient = request.POST.get('ingradient', '')
-        form.spec_io = request.POST.get('spec_io', '')
-        form.spec_details = request.POST.get('spec_details', '')
-        form.procedure = request.POST.get('procedure', '')
-        form.calculation_details = request.POST.get('calculation_details', '')
-        form.conclusion = request.POST.get('conclusion', '')
+        form = get_object_or_404(FormData, stp_id=stp_id)
+        form.product_name = request.POST.get('product_name', '')
+        form.batch_number = request.POST.get('batch_number', '')
+        form.manufacture_date = request.POST.get('manufacture_date', None)
+        form.expiry_date = request.POST.get('expiry_date', None)
+        form.active_ingredient_concentration = request.POST.get('active_ingredient_concentration', '')
+        form.capsule_size = request.POST.get('capsule_size', '')
+        form.dessolution_test = request.POST.get('dessolution_test', '')
+        form.hardness_test = request.POST.get('hardness_test', '')
+        form.moisture_content = request.POST.get('moisture_content', '')
+        form.dosage_unit_uniformiry = request.POST.get('dosage_unit_uniformiry', '')
+        form.appearance = request.POST.get('appearance', '')
+        form.packaging_integrity = request.POST.get('packaging_integrity', '')
+        form.storage_conditions = request.POST.get('storage_conditions', '')
+        form.stability_testing = request.POST.get('stability_testing', '')
 
-        if not form.objective:
-            messages.warning(request, "The objective is required!")
+        if not form.product_name:
+            messages.warning(request, "The product name is required!")
             update_url = reverse('update', args=[stp_id])
             return redirect(update_url)
         
@@ -194,12 +192,11 @@ def logoutUser(request):
 
 def form(request):
     if FormData.objects.last():
-        record_number = FormData.objects.last().id + 1
+        record_number = FormData.objects.last().stp_id + 1
     else:
         record_number =  1
 
     context = {
-        'show': False,
         'record_number': record_number
     }
     if not request.user.is_authenticated:
@@ -207,34 +204,42 @@ def form(request):
         return redirect('/', context)
 
     if request.method == 'POST':
-        objective = request.POST.get('objective')
-        scope = request.POST.get('scope')
-        concentration = request.POST.get('concentration')
-        volums = request.POST.get('volums')
-        ingradient = request.POST.get('ingradient')
-        spec_io = request.POST.get('spec_io')
-        spec_details = request.POST.get('spec_details')
-        procedure = request.POST.get('procedure')
-        calculation_details = request.POST.get('calculation_details')
-        conclusion = request.POST.get('conclusion')
-        initiation_date = timezone.now().date()
+        stp_id = request.POST.get('stp_id')
+        product_name = request.POST.get('product_name')
+        batch_number = request.POST.get('batch_number')
+        manufacture_date = request.POST.get('manufacture_date')
+        expiry_date = request.POST.get('expiry_date')
+        active_ingredient_concentration = request.POST.get('active_ingredient_concentration')
+        capsule_size = request.POST.get('capsule_size')
+        dessolution_test = request.POST.get('dessolution_test')
+        hardness_test = request.POST.get('hardness_test')
+        moisture_content = request.POST.get('moisture_content')
+        dosage_unit_uniformiry = request.POST.get('dosage_unit_uniformiry')
+        appearance = request.POST.get('appearance')
+        packaging_integrity = request.POST.get('storage_conditions')
+        storage_conditions = request.POST.get('moisture_content')
+        stability_testing = request.POST.get('stability_testing')     
 
-        if not objective:
-            messages.warning(request, "The objective is required!")
+        if not product_name:
+            messages.warning(request, "The product name is required!")
             return redirect('/form/')
 
         form = FormData(
-            objective=objective, 
-            scope=scope, 
-            concentration=concentration, 
-            volums=volums, 
-            ingradient=ingradient, 
-            spec_io=spec_io,
-            spec_details=spec_details,
-            procedure=procedure,
-            calculation_details=calculation_details,
-            conclusion=conclusion,
-            initiation_date=initiation_date
+            stp_id=stp_id, 
+            product_name=product_name,
+            batch_number=batch_number,
+            manufacture_date=manufacture_date,
+            expiry_date=expiry_date,
+            active_ingredient_concentration=active_ingredient_concentration,
+            capsule_size=capsule_size,
+            dessolution_test=dessolution_test,
+            hardness_test=hardness_test,
+            moisture_content=moisture_content,
+            dosage_unit_uniformiry=dosage_unit_uniformiry,
+            appearance=appearance,
+            packaging_integrity=packaging_integrity,
+            storage_conditions=storage_conditions,
+            stability_testing=stability_testing,
         )
         form.save()
         messages.success(request, "Record created successfully.")
@@ -248,7 +253,7 @@ def display(request, stp_id):
         return redirect('/')
 
     try:
-        form = FormData.objects.get(id=stp_id) 
+        form = FormData.objects.get(stp_id=stp_id) 
     except:
         # If stp_id is incorrect
         messages.error(request, 'Record not found. Please check the STP ID.')
@@ -261,18 +266,23 @@ def display(request, stp_id):
     return render(request, 'view.html', context)
 
 def generate_pdf(request, stp_id):
-    form = FormData.objects.get(id=stp_id)
+    form = FormData.objects.get(stp_id=stp_id)
     data = {
-        'Objective': form.objective,
-        'Scope': form.scope,
-        'Concentration': form.concentration,
-        'Volumes': form.volums,
-        'Ingredient': form.ingradient,
-        'Spec. IO': form.spec_io,
-        'Spec. Details': form.spec_details,
-        'Procedure': form.procedure,
-        'Calculation Details': form.calculation_details,
-        'Conclusion': form.conclusion,
+        'STP ID': form.stp_id,
+        'Product Name': form.product_name,
+        'Batch Number': form.batch_number,
+        'Manufacture Date': form.manufacture_date,
+        'Expiry Date': form.expiry_date,
+        'Active Ingredient Concentration': form.active_ingredient_concentration,
+        'Capsule Size': form.capsule_size,
+        'Dissolution Test': form.dessolution_test,
+        'Hardness Test': form.hardness_test,
+        'Moisture Content': form.moisture_content,
+        'Uniformity of Dosage Unit': form.dosage_unit_uniformiry,
+        'Appearance': form.appearance,
+        'Packaging Integrity': form.packaging_integrity,
+        'Storage Conditions': form.storage_conditions,
+        'Stability Testing': form.stability_testing,
     }
 
     for key, value in data.items():
@@ -299,9 +309,9 @@ def generate_pdf(request, stp_id):
 
     # Set the title
     p.setFont("Helvetica-Bold", 16)
-    title = "OCR Form Data"
+    title = "Standard Test Procedures (STPs) for Pharmaceutical Tablets"
     title_width = p.stringWidth(title, "Helvetica-Bold", 18)
-    p.drawString(center_x - title_width / 2, height - margin, title)
+    p.drawString(0, 50, title)
 
     # Set initial y coordinate for content
     y = height - 2 * margin
@@ -340,22 +350,27 @@ def generate_pdf(request, stp_id):
 def generate_excel(request, stp_id):
     form = FormData.objects.get(id=stp_id)
     data = {
-        'Objective': form.objective,
-        'Scope': form.scope,
-        'Concentration': form.concentration,
-        'Volumes': form.volums,
-        'Ingredient': form.ingradient,
-        'Spec. IO': form.spec_io,
-        'Spec. Details': form.spec_details,
-        'Procedure': form.procedure,
-        'Calculation Details': form.calculation_details,
-        'Conclusion': form.conclusion,
+        'STP ID': form.stp_id,
+        'Product Name': form.product_name,
+        'Batch Number': form.batch_number,
+        'Manufacture Date': form.manufacture_date,
+        'Expiry Date': form.expiry_date,
+        'Active Ingredient Concentration': form.active_ingredient_concentration,
+        'Capsule Size': form.capsule_size,
+        'Dissolution Test': form.dessolution_test,
+        'Hardness Test': form.hardness_test,
+        'Moisture Content': form.moisture_content,
+        'Uniformity of Dosage Unit': form.dosage_unit_uniformiry,
+        'Appearance': form.appearance,
+        'Packaging Integrity': form.packaging_integrity,
+        'Storage Conditions': form.storage_conditions,
+        'Stability Testing': form.stability_testing,
     }
 
     # Create a new Excel workbook and add a worksheet
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = "Form Data"
+    worksheet.title = "STP Data"
 
     # Set headers
     worksheet.cell(row=1, column=1, value="Field")

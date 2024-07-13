@@ -22,18 +22,18 @@
         {% if data %}
         <table class="table table-bordered mt-4">
             <thead class="bg-info">
-                <th class="bg-info">Record Number</th>
-                <th class="bg-info w-75">Objective</th>
-                <th class="bg-info">Initiation Date</th>
+                <th class="bg-info">STD ID</th>
+                <th class="bg-info w-75">Product Name</th>
+                <th class="bg-info">Manufacture Date</th>
                 <th class="bg-info">View</th>
             </thead>
             <tbody>
                 {% for record in data %}
                     <tr>
-                        <td><a href="{% url "update" stp_id=record.id %}" class="nav-link text-primary">{{ record.id }}</a></td>
-                        <td>{{ record.objective }}</td>
-                        <td>{{ record.initiation_date }}</td>
-                        <td><a href="{% url "display" stp_id=record.id %}" class="nav-link text-primary text-center"><img src="{% static "images/eye.png" %}" class="" alt="view" width="20" height="15"></a></td>
+                        <td><a href="{% url "update" stp_id=record.stp_id %}" class="nav-link text-primary">{{ record.stp_id }}</a></td>
+                        <td>{{ record.product_name }}</td>
+                        <td>{{ record.manufacture_date }}</td>
+                        <td><a href="{% url "display" stp_id=record.stp_id %}" class="nav-link text-primary text-center"><img src="{% static "images/eye.png" %}" class="" alt="view" width="20" height="15"></a></td>
                     </tr>
                 {% endfor %}
             </tbody>
