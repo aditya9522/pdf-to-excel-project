@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}SmartExcel - Server Error{% endblock title %}
+
+{% block body %}
+<div class="">
+    <div class="d-flex justify-content-center">
+        <div class="container text-center mt-5">
+            <h1 class="display-5 mt-5">Server Error</h1>
+            <p class="lead">Sorry, something went wrong on our end. Please try again later.</p>
+            <button class="btn btn-info text-white" onclick="back()">Go Back</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function back() {
+        window.history.back();
+    }
+</script>
+
+{% endblock body %}    

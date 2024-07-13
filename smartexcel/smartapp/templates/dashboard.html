@@ -30,10 +30,10 @@
             <tbody>
                 {% for record in data %}
                     <tr>
-                        <td><a href="{% url "update" form_id=record.id %}" class="nav-link text-primary">{{ record.id }}</a></td>
+                        <td><a href="{% url "update" stp_id=record.id %}" class="nav-link text-primary">{{ record.id }}</a></td>
                         <td>{{ record.objective }}</td>
                         <td>{{ record.initiation_date }}</td>
-                        <td><a href="{% url "display" form_id=record.id %}" class="nav-link text-primary text-center"><img src="{% static "images/eye.png" %}" class="" alt="view" width="20" height="15"></a></td>
+                        <td><a href="{% url "display" stp_id=record.id %}" class="nav-link text-primary text-center"><img src="{% static "images/eye.png" %}" class="" alt="view" width="20" height="15"></a></td>
                     </tr>
                 {% endfor %}
             </tbody>

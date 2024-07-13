@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404
 from django.contrib import messages
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -25,12 +26,13 @@ def index(request):
         user = authenticate(request, username = userid, password = password)
         if user is not None:
             login(request, user)
+            messages.success(request, 'Logged in Successfully.')
             return redirect('dashboard/')
         else:
             context = {
                 'show': False
             }
-            messages.error(request, 'Invalid credencial.')
+            messages.error(request, 'Invalid credencials.')
             return render(request, 'index.html', context)
     context = {
         'show': False
@@ -50,7 +52,6 @@ def dashboard(request):
         messages.warning(request, "Login Required!")
         return redirect('/', context)
 
-    messages.success(request, 'Logged in Successfully.')
     return render(request, 'dashboard.html', context)
 
 def bulkExcel(request):
@@ -150,10 +151,10 @@ def bulkPDF(request):
 
     return  redirect('dashboard')
 
-def update(request, form_id):
+def update(request, stp_id):
     if request.method == 'POST':
         #spec_details = datetime.datetime.strptime(spec_details, '%Y-%m-%d').date()
-        form = get_object_or_404(FormData, id=form_id) 
+        form = get_object_or_404(FormData, id=stp_id) 
         form.objective = request.POST.get('objective', '')
         form.scope = request.POST.get('scope', '')
         form.concentration = request.POST.get('concentration', '')
@@ -167,14 +168,20 @@ def update(request, form_id):
 
         if not form.objective:
             messages.warning(request, "The objective is required!")
-            update_url = reverse('update', args=[form_id])
+            update_url = reverse('update', args=[stp_id])
             return redirect(update_url)
         
         form.save()
         messages.success(request, "Record updated successfully.")
         return redirect('dashboard')
     
-    form = FormData.objects.get(id=form_id) 
+    try:
+        form = FormData.objects.get(id=stp_id) 
+    except:
+        # If stp_id is incorrect
+        messages.error(request, 'Record not found. Please check the STP ID.')
+        return redirect('dashboard')
+    
     context = {
         'form': form
     }
@@ -235,19 +242,26 @@ def form(request):
 
     return render(request, 'form.html', context)
 
-def display(request, form_id):
+def display(request, stp_id):
     if not request.user.is_authenticated:
+        messages.warning(request, 'Login required!')
         return redirect('/')
 
-    form = FormData.objects.get(id=form_id) 
+    try:
+        form = FormData.objects.get(id=stp_id) 
+    except:
+        # If stp_id is incorrect
+        messages.error(request, 'Record not found. Please check the STP ID.')
+        return redirect('dashboard')
+    
     context = {
         'form': form
     }
 
     return render(request, 'view.html', context)
 
-def generate_pdf(request, form_id):
-    form = FormData.objects.get(id=form_id)
+def generate_pdf(request, stp_id):
+    form = FormData.objects.get(id=stp_id)
     data = {
         'Objective': form.objective,
         'Scope': form.scope,
@@ -270,7 +284,7 @@ def generate_pdf(request, form_id):
             data[key] = ""
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="form_{form_id}.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="form_{stp_id}.pdf"'
 
     # Create PDF document
     p = canvas.Canvas(response, pagesize=A4)
@@ -323,8 +337,8 @@ def generate_pdf(request, form_id):
     p.save()
     return response
 
-def generate_excel(request, form_id):
-    form = FormData.objects.get(id=form_id)
+def generate_excel(request, stp_id):
+    form = FormData.objects.get(id=stp_id)
     data = {
         'Objective': form.objective,
         'Scope': form.scope,
@@ -367,7 +381,7 @@ def generate_excel(request, form_id):
     
     return response
 
-def export_excel(request, form_id):
+def export_excel(request, stp_id):
     if request.method == 'POST' and request.FILES.get('pdf'):
         pdf_file = request.FILES['pdf']
         
@@ -397,8 +411,11 @@ def export_excel(request, form_id):
         response.write(excel_file.getvalue())
         
         return response
-    return redirect('form', form_id=form_id)
-
+    return redirect('form', stp_id=stp_id)
 
 def custom_404(request, exception):
-    return render(request, 'unknown.html', status=404)
+    return render(request, '404.html', status=404)
+
+def custom_500(request):
+    return render(request, '500.html', status=500)
+
