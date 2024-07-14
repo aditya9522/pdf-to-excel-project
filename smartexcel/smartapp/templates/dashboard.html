@@ -21,19 +21,19 @@
         </div>
         {% if data %}
         <table class="table table-bordered mt-4">
-            <thead class="bg-info">
-                <th class="bg-info">STD ID</th>
-                <th class="bg-info w-75">Product Name</th>
-                <th class="bg-info">Manufacture Date</th>
-                <th class="bg-info">View</th>
+            <thead class="">
+                <th style="background-color: #2a3441;" class="text-white">STD Id</th>
+                <th style="background-color: #2a3441;" class="text-white w-75">Product Name</th>
+                <th style="background-color: #2a3441;" class="text-white">Manufacture Date</th>
+                <th style="background-color: #2a3441;" class="text-white">View</th>
             </thead>
             <tbody>
                 {% for record in data %}
                     <tr>
-                        <td><a href="{% url "update" stp_id=record.stp_id %}" class="nav-link text-primary">{{ record.stp_id }}</a></td>
+                        <td><a href="{% url "update" stp_id=record.stp_id %}" class="nav-link text-primary" title="Update Record">{{ record.stp_id }}</a></td>
                         <td>{{ record.product_name }}</td>
-                        <td>{{ record.manufacture_date }}</td>
-                        <td><a href="{% url "display" stp_id=record.stp_id %}" class="nav-link text-primary text-center"><img src="{% static "images/eye.png" %}" class="" alt="view" width="20" height="15"></a></td>
+                        <td>{{ record.manufacture_date|date:'Y-m-d' }}</td>
+                        <td><a href="{% url "display" stp_id=record.stp_id %}" class="nav-link text-primary text-center"><img src="{% static "images/eye.png" %}" class="" alt="view" width="20" height="13" title="View Record"></a></td>
                     </tr>
                 {% endfor %}
             </tbody>

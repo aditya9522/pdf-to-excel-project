@@ -11,7 +11,7 @@
 </head>
 <body>
     <header>
-        <div class="d-flex justify-content-between text-start px-5 bg-secondary-subtle text-light py-2">
+        <div class="d-flex justify-content-between text-start px-5 text-light py-2" style="background-color: #2a3441;">
             <div class=""><img src="{% static "images/logo.png" %}" alt="logo" width="150" height="50"></div>
         </div>
     </header>
@@ -38,7 +38,7 @@
                         {% comment %} <div class="text-primary mx-4">Privacy Policy</div> {% endcomment %}
                     </div>
                 </div>
-                <form class="border rounded p-4 bg-info w-50" method="POST">
+                <form class="rounded p-4 bg-info w-50" method="POST">
                     {% csrf_token %}
                     <div class="mb-5">
                         <h2 class="text-center text-light">Admin Login</h2>

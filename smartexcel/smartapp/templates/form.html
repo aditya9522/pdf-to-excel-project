@@ -14,12 +14,12 @@
                 <a href="/dashboard" class="btn btn-info text-light mx-4 shadow">Exit</a>
                 <button type="submit" class="btn btn-info text-light shadow">Save</button>
             </div>
-            <div class="border shadow rounded px-4 bg-light">
+            <div class="border shadow rounded p-4 bg-light">
+                {% comment %} <span class="bg-white rounded py-2 px-3 text-dark fw-medium">Record Number : {{ form.stp_id }}</span> {% endcomment %}
                 <div class="mb-3 row">
                     <div class="col-6">
                         <label for="stp_id" class="form-label">STP ID</label>
-                        <input type="text" class="form-control border-gray border-2 {% if messages %} is-invalid {% endif %}" id="stp_id" name="stp_id">
-                        {% if messages %}<span class="text-body-tertiary mx-1">Objective field can not be empty!</span>{% endif %}
+                        <input type="number" class="form-control border-gray border-2" id="stp_id" value="{{ stp_id }}" name="stp_id" disabled>
                     </div>
                     <div class="col-6">
                         <label for="batch_number" class="form-label">Batch Number</label>
@@ -27,24 +27,10 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="product_name" class="form-label">Product Name</label>
+                    <label for="product_name" class="form-label {% if messages %} is-invalid {% endif %}">Product Name</label>
                     <input type="text" class="form-control border-gray border-2" id="product_name" name="product_name">
+                    {% if messages %}<span class="text-body-tertiary mx-1">Product name field can not be empty.</span>{% endif %}
                 </div>
-                {% comment %} <div class="row">
-                    <div class="mb-3 col-6">
-                        <label for="volums" class="form-label">Volums</label>
-                        <select class="form-select border-gray border-2" aria-label="Default select example" id="volums" name="volums">
-                            <option value="" selected>Open this select menu</option>
-                            <option value="Volume 1">Volume 1</option>
-                            <option value="Volume 2">Volume 2</option>
-                            <option value="Volume 3">Volume 3</option>
-                        </select>
-                    </div>
-                    <div class="mb-3 col-6">
-                        <label for="spec_details" class="form-label">Spec. Details</label>
-                        <input type="text" class="form-control border-gray border-2" id="spec_details" name="spec_details">
-                    </div>
-                </div> {% endcomment %}
                 <div class="mb-3 row">
                     <div class="col-6">
                         <label for="manufacture_date" class="form-label">Manufacture Date</label>
@@ -52,8 +38,7 @@
                     </div>
                     <div class="col-6">
                         <label for="expiry_date" class="form-label">Expiry Date</label>
-                        <input type="text" class="form-control border-gray border-2 {% if messages %} is-invalid {% endif %}" id="expiry_date" name="expiry_date">
-                        {% if messages %}<span class="text-body-tertiary mx-1">Objective field can not be empty!</span>{% endif %}
+                        <input type="date" class="form-control border-gray border-2" id="expiry_date" name="expiry_date">
                     </div>
                 </div>
                 <div class="mb-3">

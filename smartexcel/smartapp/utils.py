@@ -17,14 +17,15 @@ def pdf_to_excel(pdf_file):
     
     current_row = 2
     
+    stp_id = None  # To store the STP ID found in the document
+    
     for page_num in range(len(pdf_document)):
         page = pdf_document[page_num]
         text = page.get_text("text")
         start = text.index('\n')
         text = text[start+1:]
         lines = text.split("\n")
-        #  Preparing data to insert in excel
-
+        
         key = None
         value_lines = []
         result = []
@@ -44,11 +45,16 @@ def pdf_to_excel(pdf_file):
         if key is not None:
             result.append([key, ' '.join(value_lines).strip()])
 
-        # Data preparation completed now adding to the excel sheet
+        # Check if there's an STP ID in the result
+        for item in result:
+            if item[0] == 'STP ID':
+                stp_id = item[1]
+                break
 
+        # Adding data to the excel sheet
         for item in result:
             worksheet.cell(row=current_row, column=1, value=item[0])
             worksheet.cell(row=current_row, column=2, value=item[1])
             current_row += 1
 
-    return workbook
+    return workbook, stp_id

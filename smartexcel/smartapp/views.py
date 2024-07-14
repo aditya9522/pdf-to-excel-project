@@ -7,7 +7,7 @@ from reportlab.lib.units import inch
 from django.urls import reverse
 import textwrap
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from smartapp.models import FormData
 from openpyxl import Workbook
 from .utils import pdf_to_excel
@@ -44,7 +44,7 @@ def dashboard(request):
     }
     if not request.user.is_authenticated:
         messages.warning(request, "Login Required!")
-        return redirect('/', context)
+        return redirect('/')
 
     return render(request, 'dashboard.html', context)
 
@@ -52,10 +52,15 @@ def bulkExcel(request):
     if request.method == 'POST':
         attachmentCount = int(request.POST.get('rows'))
         excel_dir = os.path.join(settings.BASE_DIR, 'Excel-Files')
-        os.makedirs(excel_dir, exist_ok=True)
+        processed_dir = os.path.join(excel_dir, 'processed')
+        error_dir = os.path.join(excel_dir, 'ErrorFiles')
+        os.makedirs(processed_dir, exist_ok=True)
+        os.makedirs(error_dir, exist_ok=True)
 
         # List to store dictionaries representing each row of the combined DataFrame
         data_list = []
+        stp_ids = set()
+        error_files = []
 
         # Iterate over each uploaded file
         for i in range(1, attachmentCount + 1):
@@ -71,6 +76,16 @@ def bulkExcel(request):
                 # Read Excel file into a DataFrame
                 df = pd.read_excel(file_path)
 
+                # Check for duplicate STP IDs
+                if 'STP ID' in df['Field'].values:
+                    stp_id = df.loc[df['Field'] == 'STP ID', 'Value'].values[0]
+                    if stp_id in stp_ids:
+                        error_files.append(file_object.name)
+                        error_file_path = os.path.join(error_dir, file_object.name)
+                        os.replace(file_path, error_file_path)
+                        continue
+                    stp_ids.add(stp_id)
+
                 # Transform DataFrame to a dictionary and add the 'Sheet Name' column
                 row_dict = {'Sheet Name': file_object.name}
                 for _, row in df.iterrows():
@@ -78,21 +93,23 @@ def bulkExcel(request):
                 
                 data_list.append(row_dict)
 
-                # Optionally, remove the file from disk after reading
-                os.remove(file_path)
+                # Move processed file to the processed directory
+                processed_file_path = os.path.join(processed_dir, file_object.name)
+                os.replace(file_path, processed_file_path)
         
         # Convert the list of dictionaries to a DataFrame
-        combined_df = pd.DataFrame(data_list)
+        if data_list:
+            combined_df = pd.DataFrame(data_list)
 
-        # Write combined DataFrame to a new Excel file
-        combined_file_path = os.path.join(excel_dir, 'Combined-Excel-Sheet.xlsx')
-        combined_df.to_excel(combined_file_path, index=False)
+            # Write combined DataFrame to a new Excel file
+            combined_file_path = os.path.join(processed_dir, 'Combined-Excel-Sheet.xlsx')
+            combined_df.to_excel(combined_file_path, index=False)
 
-        if os.path.exists(combined_file_path):
-            with open(combined_file_path, 'rb') as f:
-                response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                response['Content-Disposition'] = 'attachment; filename=Combined-Excel-Sheet.xlsx'
-            return response
+            if os.path.exists(combined_file_path):
+                with open(combined_file_path, 'rb') as f:
+                    response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                    response['Content-Disposition'] = 'attachment; filename=Combined-Excel-Sheet.xlsx'
+                return response
 
     return redirect('dashboard')
 
@@ -100,41 +117,50 @@ def bulkPDF(request):
     if request.method == 'POST':
         attachmentCount = int(request.POST.get('rows'))
         pdf_dir = os.path.join(settings.BASE_DIR, 'PDF-Files')
-        os.makedirs(pdf_dir, exist_ok=True)
+        processed_dir = os.path.join(pdf_dir, 'Processed')
+        error_dir = os.path.join(pdf_dir, 'Error')
+        os.makedirs(processed_dir, exist_ok=True)
+        os.makedirs(error_dir, exist_ok=True)
         data_list = []
+        stp_ids = set()
+        duplicate_files = []
 
         for i in range(1, attachmentCount + 1):
             file_object = request.FILES.get(f'attachment_pdf_{i}')
             if file_object:
                 file_path = os.path.join(pdf_dir, file_object.name)
 
-                # saving file temp.
+                # Saving file temporarily
                 with open(file_path, 'wb') as temp_pdf:
                     for chunk in file_object.chunks():
                         temp_pdf.write(chunk)
             
-                workbook = pdf_to_excel(file_path)
+                workbook, stpid = pdf_to_excel(file_path)
                 # Remove the temporary PDF file
                 os.remove(file_path)
 
                 excel_path = file_path.replace('.pdf', '.xlsx')
                 workbook.save(excel_path)
 
-                # Now storing excel data to single sheet
-                df = pd.read_excel(excel_path)
-
-                # Transform DataFrame to a dictionary and add the 'Sheet Name' column
-                row_dict = {'File Name': file_object.name}
-                for _, row in df.iterrows():
-                    row_dict[row['Field']] = row['Value']
-                
-                data_list.append(row_dict)
+                if stpid in stp_ids:
+                    duplicate_files.append(excel_path)
+                    os.makedirs(error_dir, exist_ok=True)
+                    os.rename(excel_path, os.path.join(error_dir, os.path.basename(excel_path)))
+                else:
+                    stp_ids.add(stpid)
+                    df = pd.read_excel(excel_path)
+                    row_dict = {'File Name': file_object.name}
+                    for _, row in df.iterrows():
+                        row_dict[row['Field']] = row['Value']
+                    
+                    data_list.append(row_dict)
+                    os.rename(excel_path, os.path.join(processed_dir, os.path.basename(excel_path)))
 
         # Convert the list of dictionaries to a DataFrame
         combined_df = pd.DataFrame(data_list)
 
         # Write combined DataFrame to a new Excel file
-        combined_file_path = os.path.join(pdf_dir, 'Combined-Data-Sheet.xlsx')
+        combined_file_path = os.path.join(processed_dir, 'Combined-Data-Sheet.xlsx')
         combined_df.to_excel(combined_file_path, index=False)
 
         if os.path.exists(combined_file_path):
@@ -143,11 +169,14 @@ def bulkPDF(request):
                 response['Content-Disposition'] = 'attachment; filename=Combined-Data-Sheet.xlsx'
             return response
 
-    return  redirect('dashboard')
+    return redirect('dashboard')
 
 def update(request, stp_id):
+    if not request.user.is_authenticated:
+        messages.warning(request, "Login Required!")
+        return redirect('/')
+    
     if request.method == 'POST':
-        #spec_details = datetime.datetime.strptime(spec_details, '%Y-%m-%d').date()
         form = get_object_or_404(FormData, stp_id=stp_id)
         form.product_name = request.POST.get('product_name', '')
         form.batch_number = request.POST.get('batch_number', '')
@@ -174,7 +203,7 @@ def update(request, stp_id):
         return redirect('dashboard')
     
     try:
-        form = FormData.objects.get(id=stp_id) 
+        form = FormData.objects.get(stp_id=stp_id) 
     except:
         # If stp_id is incorrect
         messages.error(request, 'Record not found. Please check the STP ID.')
@@ -192,12 +221,12 @@ def logoutUser(request):
 
 def form(request):
     if FormData.objects.last():
-        record_number = FormData.objects.last().stp_id + 1
+        stp_id = FormData.objects.last().stp_id + 1
     else:
-        record_number =  1
+        stp_id =  1
 
     context = {
-        'record_number': record_number
+        'stp_id': stp_id
     }
     if not request.user.is_authenticated:
         messages.warning(request, "Login Required!")
@@ -207,8 +236,8 @@ def form(request):
         stp_id = request.POST.get('stp_id')
         product_name = request.POST.get('product_name')
         batch_number = request.POST.get('batch_number')
-        manufacture_date = request.POST.get('manufacture_date')
-        expiry_date = request.POST.get('expiry_date')
+        manufacture_date = request.POST.get('manufacture_date', None) or None
+        expiry_date = request.POST.get('expiry_date', None) or None
         active_ingredient_concentration = request.POST.get('active_ingredient_concentration')
         capsule_size = request.POST.get('capsule_size')
         dessolution_test = request.POST.get('dessolution_test')
@@ -301,54 +330,58 @@ def generate_pdf(request, stp_id):
     width, height = A4
 
     # Define margins
-    margin = 50
+    margin = 60
     usable_width = width - 2 * margin
-
-    # Calculate center of the page
-    center_x = width / 2
 
     # Set the title
     p.setFont("Helvetica-Bold", 16)
     title = "Standard Test Procedures (STPs) for Pharmaceutical Tablets"
-    title_width = p.stringWidth(title, "Helvetica-Bold", 18)
-    p.drawString(0, 50, title)
+    title_width = p.stringWidth(title, "Helvetica-Bold", 16)
+    p.drawString((width - title_width) / 2, height - margin, title)  # Centered at the top
 
     # Set initial y coordinate for content
     y = height - 2 * margin
 
     # Loop through data and add to PDF
     for key, value in data.items():
-        if y < margin:  # Check if we need to add a new page
+        wrapped_value = textwrap.wrap(str(value), width=int(usable_width / 5))  # Adjust width as needed
+        needed_space = 20 + (15 * len(wrapped_value)) + 10  # Heading height + content lines height + additional space
+
+        # Check if there's enough space for both the heading and its content
+        if y < needed_space:  # If not enough space, start a new page
             p.showPage()  # Create a new page
             p.setFont("Helvetica-Bold", 16)
-            p.drawString(center_x - title_width / 2, height - margin, title)
+            p.drawString((width - title_width) / 2, height - margin, title)  # Centered at the top of the new page
             y = height - 2 * margin  # Reset y coordinate for new page
 
         # Draw heading
         p.setFont("Helvetica-Bold", 14)
-        p.drawString(margin + 20, y, f"{key}:")
+        p.drawString(margin, y, f"{key}:")
         y -= 20
 
-        # Wrap and draw content
+        # Draw content
         p.setFont("Helvetica", 12)
-        wrapped_value = textwrap.wrap(value, width=int(usable_width / 6))  # Adjust width as needed
         for line in wrapped_value:
-            if y < margin:  # Check if we need to add a new page
+            if y < 20:  # Check if we need to add a new page
                 p.showPage()  # Create a new page
                 p.setFont("Helvetica-Bold", 16)
-                p.drawString(center_x - title_width / 2, height - margin, title)
+                p.drawString((width - title_width) / 2, height - margin, title)  # Centered at the top of the new page
                 y = height - 2 * margin  # Reset y coordinate for new page
-            
-            p.drawString(margin + 40, y, line)
+                p.setFont("Helvetica-Bold", 14)
+                p.drawString(margin, y, f"{key}:")
+                y -= 20
+
+            p.drawString(margin, y, line)
             y -= 15  # Move y coordinate up for next row of content
 
         y -= 10  # Additional space between sections
 
+    p.drawString(width / 2, margin / 2, "")
     p.save()
     return response
 
 def generate_excel(request, stp_id):
-    form = FormData.objects.get(id=stp_id)
+    form = FormData.objects.get(stp_id=stp_id)
     data = {
         'STP ID': form.stp_id,
         'Product Name': form.product_name,
@@ -399,6 +432,11 @@ def generate_excel(request, stp_id):
 def export_excel(request, stp_id):
     if request.method == 'POST' and request.FILES.get('pdf'):
         pdf_file = request.FILES['pdf']
+        is_pdf = pdf_file.name.split('.')[-1].lower() == 'pdf'
+
+        if not is_pdf:
+            messages.warning(request, 'Please insert PDF file only!')
+            return HttpResponseRedirect(reverse('export-excel', args=[stp_id]))
         
         # Save the uploaded PDF file temporarily
         temp_dir = os.path.join(settings.BASE_DIR, 'temp')
@@ -410,7 +448,7 @@ def export_excel(request, stp_id):
                 temp_pdf.write(chunk)
         
         # Convert PDF to Excel
-        workbook = pdf_to_excel(temp_pdf_path)
+        workbook, _ = pdf_to_excel(temp_pdf_path)
         
         # Remove the temporary PDF file
         os.remove(temp_pdf_path)
