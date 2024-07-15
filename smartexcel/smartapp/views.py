@@ -48,16 +48,25 @@ def dashboard(request):
 def bulkExcel(request):
     if request.method == 'POST':
         attachmentCount = int(request.POST.get('rows'))
-        excel_dir = os.path.join(settings.BASE_DIR, 'Excel-Files')
-        processed_dir = os.path.join(excel_dir, 'processed')
+        excel_dir = os.path.join(settings.MEDIA_ROOT, 'Excel-Files')
+        processed_dir = os.path.join(excel_dir, 'Processed')
         error_dir = os.path.join(excel_dir, 'ErrorFiles')
+        combined_file_path = os.path.join(processed_dir, 'Combined-Excel-Sheet.xlsx')
+
         os.makedirs(processed_dir, exist_ok=True)
         os.makedirs(error_dir, exist_ok=True)
 
-        # List to store dictionaries representing each row of the combined DataFrame
-        data_list = []
-        stp_ids = set()
+        new_data_list = []
         error_files = []
+
+        # Load existing data if the combined file already exists
+        if os.path.exists(combined_file_path):
+            combined_df = pd.read_excel(combined_file_path)
+            existing_stp_ids = set(combined_df['STP ID'].unique())
+            existing_data = combined_df.to_dict('records')
+        else:
+            existing_stp_ids = set()
+            existing_data = []
 
         # Iterate over each uploaded file
         for i in range(1, attachmentCount + 1):
@@ -65,9 +74,9 @@ def bulkExcel(request):
             is_excel = file_object.name.split('.')[-1].lower() == 'xlsx'
 
             if not is_excel:
-                messages.warning(request, 'Please insert excel files only to perform the action.')
+                messages.warning(request, 'Please insert Excel files only to perform the action.')
                 return redirect('dashboard')
-            
+
             if file_object:
                 file_path = os.path.join(excel_dir, file_object.name)
                 
@@ -82,30 +91,32 @@ def bulkExcel(request):
                 # Check for duplicate STP IDs
                 if 'STP ID' in df['Field'].values:
                     stp_id = df.loc[df['Field'] == 'STP ID', 'Value'].values[0]
-                    if stp_id in stp_ids:
+                    if int(stp_id) in existing_stp_ids:
                         error_files.append(file_object.name)
                         error_file_path = os.path.join(error_dir, file_object.name)
                         os.replace(file_path, error_file_path)
                         continue
-                    stp_ids.add(stp_id)
+                    existing_stp_ids.add(stp_id)
 
                 # Transform DataFrame to a dictionary and add the 'Sheet Name' column
                 row_dict = {'Sheet Name': file_object.name}
                 for _, row in df.iterrows():
                     row_dict[row['Field']] = row['Value']
-                
-                data_list.append(row_dict)
+
+                new_data_list.append(row_dict)
 
                 # Move processed file to the processed directory
                 processed_file_path = os.path.join(processed_dir, file_object.name)
                 os.replace(file_path, processed_file_path)
-        
-        # Convert the list of dictionaries to a DataFrame
-        if data_list:
-            combined_df = pd.DataFrame(data_list)
 
-            # Write combined DataFrame to a new Excel file
-            combined_file_path = os.path.join(processed_dir, 'Combined-Excel-Sheet.xlsx')
+        # Combine new data with existing data
+        combined_data = existing_data + new_data_list
+
+        # Convert the list of dictionaries to a DataFrame
+        if combined_data:
+            combined_df = pd.DataFrame(combined_data)
+
+            # Write combined DataFrame to the existing Excel file
             combined_df.to_excel(combined_file_path, index=False)
 
             if os.path.exists(combined_file_path):
@@ -119,14 +130,25 @@ def bulkExcel(request):
 def bulkPDF(request):
     if request.method == 'POST':
         attachmentCount = int(request.POST.get('rows'))
-        pdf_dir = os.path.join(settings.BASE_DIR, 'STP-Files')
+        pdf_dir = os.path.join(settings.MEDIA_ROOT, 'STP-Files')
         processed_dir = os.path.join(pdf_dir, 'Processed')
         error_dir = os.path.join(pdf_dir, 'Error')
+        combined_file_path = os.path.join(processed_dir, 'Combined-Data-Sheet.xlsx')
+        
         os.makedirs(processed_dir, exist_ok=True)
         os.makedirs(error_dir, exist_ok=True)
-        data_list = []
-        stp_ids = set()
+        
+        new_data_list = []
         duplicate_files = []
+
+        # Load existing data if the combined file already exists
+        if os.path.exists(combined_file_path):
+            combined_df = pd.read_excel(combined_file_path)
+            existing_stp_ids = set(combined_df['STP ID'].unique())
+            existing_data = combined_df.to_dict('records')
+        else:
+            existing_stp_ids = set()
+            existing_data = []
 
         for i in range(1, attachmentCount + 1):
             file_object = request.FILES.get(f'attachment_pdf_{i}')
@@ -166,9 +188,9 @@ def bulkPDF(request):
 
                 workbook.save(excel_path)
 
-                if stpid in stp_ids:
+                # Check if the STP ID exists in the combined Excel sheet
+                if int(stpid) in existing_stp_ids:
                     duplicate_files.append(excel_path)
-                    os.makedirs(error_dir, exist_ok=True)
                     error_path = os.path.join(error_dir, os.path.basename(excel_path))
                     counter = 1
                     while os.path.exists(error_path):
@@ -177,13 +199,12 @@ def bulkPDF(request):
                         counter += 1
                     os.rename(excel_path, error_path)
                 else:
-                    stp_ids.add(stpid)
                     df = pd.read_excel(excel_path)
-                    row_dict = {'File Name': file_object.name}
+                    row_dict = {'File Name': file_object.name, 'STP ID': stpid}
                     for _, row in df.iterrows():
                         row_dict[row['Field']] = row['Value']
                     
-                    data_list.append(row_dict)
+                    new_data_list.append(row_dict)
                     processed_path = os.path.join(processed_dir, os.path.basename(excel_path))
                     counter = 1
                     while os.path.exists(processed_path):
@@ -192,11 +213,13 @@ def bulkPDF(request):
                         counter += 1
                     os.rename(excel_path, processed_path)
 
-        # Convert the list of dictionaries to a DataFrame
-        combined_df = pd.DataFrame(data_list)
+        # Combine new data with existing data
+        combined_data = existing_data + new_data_list
 
-        # Write combined DataFrame to a new Excel file
-        combined_file_path = os.path.join(processed_dir, 'Combined-Data-Sheet.xlsx')
+        # Convert the list of dictionaries to a DataFrame
+        combined_df = pd.DataFrame(combined_data)
+
+        # Write combined DataFrame to the existing Excel file
         combined_df.to_excel(combined_file_path, index=False)
 
         if os.path.exists(combined_file_path):
@@ -206,7 +229,7 @@ def bulkPDF(request):
             return response
 
     return redirect('dashboard')
-
+     
 def update(request, stp_id):
     if not request.user.is_authenticated:
         messages.warning(request, "Login Required!")
