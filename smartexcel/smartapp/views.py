@@ -1,9 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404
 from django.contrib import messages
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
 from django.urls import reverse
 import textwrap
 from django.conf import settings
@@ -15,7 +13,6 @@ import os
 import io
 import datetime
 from django.contrib.auth import authenticate, login, logout
-from django.utils import timezone
 import pandas as pd
 
 
@@ -65,6 +62,12 @@ def bulkExcel(request):
         # Iterate over each uploaded file
         for i in range(1, attachmentCount + 1):
             file_object = request.FILES.get(f'attachment_excel_{i}')
+            is_excel = file_object.name.split('.')[-1].lower() == 'xlsx'
+
+            if not is_excel:
+                messages.warning(request, 'Please insert excel files only to perform the action.')
+                return redirect('dashboard')
+            
             if file_object:
                 file_path = os.path.join(excel_dir, file_object.name)
                 
@@ -116,7 +119,7 @@ def bulkExcel(request):
 def bulkPDF(request):
     if request.method == 'POST':
         attachmentCount = int(request.POST.get('rows'))
-        pdf_dir = os.path.join(settings.BASE_DIR, 'PDF-Files')
+        pdf_dir = os.path.join(settings.BASE_DIR, 'STP-Files')
         processed_dir = os.path.join(pdf_dir, 'Processed')
         error_dir = os.path.join(pdf_dir, 'Error')
         os.makedirs(processed_dir, exist_ok=True)
@@ -127,10 +130,23 @@ def bulkPDF(request):
 
         for i in range(1, attachmentCount + 1):
             file_object = request.FILES.get(f'attachment_pdf_{i}')
+            is_pdf = file_object.name.split('.')[-1].lower() == 'pdf'
+
+            if not is_pdf:
+                messages.warning(request, 'Please insert PDF files only to perform the action.')
+                return redirect('dashboard')
+            
             if file_object:
                 file_path = os.path.join(pdf_dir, file_object.name)
+                counter = 1
 
-                # Saving file temporarily
+                # Ensure unique file path
+                while os.path.exists(file_path):
+                    base, ext = os.path.splitext(file_path)
+                    file_path = f"{base} ({counter}){ext}"
+                    counter += 1
+
+                # Save the file temporarily
                 with open(file_path, 'wb') as temp_pdf:
                     for chunk in file_object.chunks():
                         temp_pdf.write(chunk)
@@ -140,12 +156,26 @@ def bulkPDF(request):
                 os.remove(file_path)
 
                 excel_path = file_path.replace('.pdf', '.xlsx')
+                counter = 1
+
+                # Ensure unique excel path for processed/error directories
+                while os.path.exists(excel_path):
+                    base, ext = os.path.splitext(excel_path)
+                    excel_path = f"{base} ({counter}){ext}"
+                    counter += 1
+
                 workbook.save(excel_path)
 
                 if stpid in stp_ids:
                     duplicate_files.append(excel_path)
                     os.makedirs(error_dir, exist_ok=True)
-                    os.rename(excel_path, os.path.join(error_dir, os.path.basename(excel_path)))
+                    error_path = os.path.join(error_dir, os.path.basename(excel_path))
+                    counter = 1
+                    while os.path.exists(error_path):
+                        base, ext = os.path.splitext(error_path)
+                        error_path = f"{base} ({counter}){ext}"
+                        counter += 1
+                    os.rename(excel_path, error_path)
                 else:
                     stp_ids.add(stpid)
                     df = pd.read_excel(excel_path)
@@ -154,7 +184,13 @@ def bulkPDF(request):
                         row_dict[row['Field']] = row['Value']
                     
                     data_list.append(row_dict)
-                    os.rename(excel_path, os.path.join(processed_dir, os.path.basename(excel_path)))
+                    processed_path = os.path.join(processed_dir, os.path.basename(excel_path))
+                    counter = 1
+                    while os.path.exists(processed_path):
+                        base, ext = os.path.splitext(processed_path)
+                        processed_path = f"{base} ({counter}){ext}"
+                        counter += 1
+                    os.rename(excel_path, processed_path)
 
         # Convert the list of dictionaries to a DataFrame
         combined_df = pd.DataFrame(data_list)
@@ -436,7 +472,7 @@ def export_excel(request, stp_id):
 
         if not is_pdf:
             messages.warning(request, 'Please insert PDF file only!')
-            return HttpResponseRedirect(reverse('export-excel', args=[stp_id]))
+            return HttpResponseRedirect(reverse('display', args=[stp_id]))
         
         # Save the uploaded PDF file temporarily
         temp_dir = os.path.join(settings.BASE_DIR, 'temp')
@@ -464,7 +500,9 @@ def export_excel(request, stp_id):
         response.write(excel_file.getvalue())
         
         return response
-    return redirect('form', stp_id=stp_id)
+    
+    messages.warning(request, 'Please attach the file to perform the action.')
+    return  HttpResponseRedirect(reverse('display', args=[stp_id]))
 
 def custom_404(request, exception):
     return render(request, '404.html', status=404)

@@ -2,6 +2,10 @@
 
 {% block title %}Data - SmartExcel{% endblock title %}
 
+{% block toast %}
+    {% include "toast.html" with messages=messages %}
+{% endblock toast %}
+
 {% block body %}
     <div class="d-flex justify-content-center my-4">
         <div class="" style="width: 80%;">
@@ -95,15 +99,15 @@
                         <a href = "{% url 'download' stp_id=form.stp_id %}" class="btn btn-primary">Export as PDF</a>
                         <a href = "{% url 'download-excel' stp_id=form.stp_id %}" class="btn btn-success">Export as Excel</a>
                     </div>
-                    <p class="fw-medium">Convert pdf to excel : <br> 1. Upload the pdf file from your local system. <br> 2. Download Excel Sheet.</p>
+                    <p class="fw-medium">Convert pdf to excel : <br><br> 1. Upload the pdf file from your local system. <br> 2. Download Excel Sheet.</p>
                     <form id="pdfUploadForm" action="{% url 'export-excel' stp_id=form.stp_id %}" method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="pdf" class="form-label">Upload file :</label>
-                            <input class="form-control border-gray border-2" type="file" id="pdf" name="pdf">
+                            <input class="form-control border-gray border-2" type="file" id="pdf" name="pdf" required>
                         </div>
                         <div class="">
-                            <button type="submit" class="btn btn-success" id="exportExcelBtn">Download</button>
+                            <button type="submit" class="btn btn-success" id="exportExcelBtn">Download Excel</button>
                         </div>
                     </form>
                 </div>
