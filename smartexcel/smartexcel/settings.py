@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-*cuxi-zen0wa1imp=#d_od4aow6gioi@o7q#o16d1u#-0=0-q%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['3.106.134.100', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['smart.vidyagxp.com', 'localhost', '127.0.0.1']
 
 # Application definition
 

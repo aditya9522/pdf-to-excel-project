@@ -6,7 +6,7 @@ from django.urls import reverse
 import textwrap
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
-from smartapp.models import FormData
+from smartapp.models import FormData, STPRecord
 from openpyxl import Workbook
 from .utils import pdf_to_excel
 import os
@@ -35,11 +35,9 @@ def dashboard(request):
     records = FormData.objects.all().values()
     data = list(records)
     total_records = len(data)
-    media_url = request.build_absolute_uri(settings.MEDIA_URL)
     context = {
         'data': data[::-1],
         'total_records': total_records,
-        'media_url' : media_url
     }
     if not request.user.is_authenticated:
         messages.warning(request, "Login Required!")
@@ -135,23 +133,10 @@ def bulkPDF(request):
         pdf_dir = os.path.join(settings.MEDIA_ROOT, 'STP-Files')
         processed_dir = os.path.join(pdf_dir, 'Processed')
         error_dir = os.path.join(pdf_dir, 'Error')
-        combined_file_path = os.path.join(processed_dir, 'Combined-Data-Sheet.xlsx')
         
         os.makedirs(processed_dir, exist_ok=True)
         os.makedirs(error_dir, exist_ok=True)
         
-        new_data_list = []
-        duplicate_files = []
-
-        # Load existing data if the combined file already exists
-        if os.path.exists(combined_file_path):
-            combined_df = pd.read_excel(combined_file_path)
-            existing_stp_ids = set(combined_df['STP ID'].unique())
-            existing_data = combined_df.to_dict('records')
-        else:
-            existing_stp_ids = set()
-            existing_data = []
-
         for i in range(1, attachmentCount + 1):
             file_object = request.FILES.get(f'attachment_pdf_{i}')
             is_pdf = file_object.name.split('.')[-1].lower() == 'pdf'
@@ -190,23 +175,30 @@ def bulkPDF(request):
 
                 workbook.save(excel_path)
 
-                # Check if the STP ID exists in the combined Excel sheet
-                if int(stpid) in existing_stp_ids:
-                    duplicate_files.append(excel_path)
-                    error_path = os.path.join(error_dir, os.path.basename(excel_path))
-                    counter = 1
-                    while os.path.exists(error_path):
-                        base, ext = os.path.splitext(error_path)
-                        error_path = f"{base} ({counter}){ext}"
-                        counter += 1
-                    os.rename(excel_path, error_path)
-                else:
+                # Check if the STP ID exists in the STPRecord model
+                if not STPRecord.objects.filter(stp_id=int(stpid)).exists():
+                    # If STP ID does not exist, store data in STPRecord model
                     df = pd.read_excel(excel_path)
-                    row_dict = {'File Name': file_object.name, 'STP ID': stpid}
                     for _, row in df.iterrows():
-                        row_dict[row['Field']] = row['Value']
-                    
-                    new_data_list.append(row_dict)
+                        if not STPRecord.objects.filter(stp_id=int(stpid)).exists():
+                            STPRecord.objects.create(
+                                file_name=file_object.name,
+                                stp_id=int(stpid),
+                                product_name=row.get('Product Name', ''),
+                                batch_number=row.get('Batch Number', ''),
+                                manufacture_date=row.get('Manufacture Date', None),
+                                expiry_date=row.get('Expiry Date', None),
+                                active_ingredient_concentration=row.get('Active Ingredient Concentration', ''),
+                                capsule_size=row.get('Capsule Size', ''),
+                                dissolution_test=row.get('Dissolution Test', ''),
+                                hardness_test=row.get('Hardness Test', ''),
+                                moisture_content=row.get('Moisture Content', ''),
+                                uniformity_of_dosage_unit=row.get('Uniformity of Dosage Unit', ''),
+                                appearance=row.get('Appearance', ''),
+                                packaging_integrity=row.get('Packaging Integrity', ''),
+                                storage_conditions=row.get('Storage Conditions', ''),
+                                stability_testing=row.get('Stability Testing', '')
+                            )
                     processed_path = os.path.join(processed_dir, os.path.basename(excel_path))
                     counter = 1
                     while os.path.exists(processed_path):
@@ -214,24 +206,20 @@ def bulkPDF(request):
                         processed_path = f"{base} ({counter}){ext}"
                         counter += 1
                     os.rename(excel_path, processed_path)
+                else:
+                    # If STP ID exists, save Excel sheet in error directory
+                    error_path = os.path.join(error_dir, os.path.basename(excel_path))
+                    counter = 1
+                    while os.path.exists(error_path):
+                        base, ext = os.path.splitext(error_path)
+                        error_path = f"{base} ({counter}){ext}"
+                        counter += 1
+                    os.rename(excel_path, error_path)
 
-        # Combine new data with existing data
-        combined_data = existing_data + new_data_list
+        return redirect('view-stp')
 
-        # Convert the list of dictionaries to a DataFrame
-        combined_df = pd.DataFrame(combined_data)
+    return redirect('view-stp')
 
-        # Write combined DataFrame to the existing Excel file
-        combined_df.to_excel(combined_file_path, index=False)
-
-        if os.path.exists(combined_file_path):
-            with open(combined_file_path, 'rb') as f:
-                response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                response['Content-Disposition'] = 'attachment; filename=Combined-Data-Sheet.xlsx'
-            return response
-
-    return redirect('dashboard')
-     
 def update(request, stp_id):
     if not request.user.is_authenticated:
         messages.warning(request, "Login Required!")
@@ -336,6 +324,18 @@ def form(request):
         return redirect('/dashboard/')
 
     return render(request, 'form.html', context)
+
+def viewSTP(request):
+    excel_path = os.path.join(settings.MEDIA_ROOT / 'STP-Files' , 'Processed', 'Combined-Data-Sheet.xlsx')
+    df = pd.read_excel(excel_path, sheet_name=None)
+    combined_df = pd.concat(df.values())
+    data_list = combined_df.to_dict(orient='records')
+    media_url = request.build_absolute_uri(settings.MEDIA_URL)
+    context = {
+        'data' : data_list,
+        'media_url' : media_url
+    }
+    return render(request, 'view-stp.html', context)
 
 def display(request, stp_id):
     if not request.user.is_authenticated:

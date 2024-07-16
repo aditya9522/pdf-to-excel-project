@@ -9,6 +9,7 @@ urlpatterns = [
     path('update/<int:stp_id>/', views.update, name='update'),
     path('logout/', views.logoutUser, name='logout'),  
     path('form/', views.form, name='form'),
+    path('view-stp/', views.viewSTP, name='view-stp'),
     path('display/<int:stp_id>/', views.display, name='display'),
     path('download/<int:stp_id>/', views.generate_pdf, name='download'),
     path('download-excel/<int:stp_id>/', views.generate_excel, name='download-excel'),
