@@ -35,9 +35,11 @@ def dashboard(request):
     records = FormData.objects.all().values()
     data = list(records)
     total_records = len(data)
+    media_url = request.build_absolute_uri(settings.MEDIA_URL)
     context = {
         'data': data[::-1],
         'total_records': total_records,
+        'media_url' : media_url
     }
     if not request.user.is_authenticated:
         messages.warning(request, "Login Required!")

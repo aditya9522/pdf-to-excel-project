@@ -15,7 +15,7 @@
         <div class="d-flex justify-content-between">
             <div class="bg-white rounded p-2 text-dark fw-medium">Total Records : {{ total_records }}</div>
             <div class="">
-                <a href="http://localhost:8000/media/STP-Files/Processed/Combined-Data-Sheet.xlsx" target="_blank" class="btn text-light shadow" style="background-color: #2a3441;" {% if data %}disabled{% endif %}>Open Sheet</a>
+                <a href="{{ media_url }}STP-Files/Processed/Combined-Data-Sheet.xlsx" target="_blank" class="btn text-light shadow" style="background-color: #2a3441;" {% if data %}disabled{% endif %}>Open Sheet</a>
                 <button type="button" class="btn btn-primary mx-4" data-bs-toggle="modal" data-bs-target="#bulkmodal">Export Bulk Data</button>
                 <a href="/form/" class="btn btn-success text-light shadow">Create Record</a>
             </div>
