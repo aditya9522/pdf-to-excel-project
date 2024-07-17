@@ -8,7 +8,7 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from smartapp.models import FormData, STPRecord
 from openpyxl import Workbook
-from .utils import pdf_to_excel
+from .utils import pdf_to_excel, STPRecord_to_excel
 import os
 import io
 import datetime
@@ -75,7 +75,7 @@ def bulkExcel(request):
 
             if not is_excel:
                 messages.warning(request, 'Please insert Excel files only to perform the action.')
-                return redirect('dashboard')
+                return redirect('view-stp')
 
             if file_object:
                 file_path = os.path.join(excel_dir, file_object.name)
@@ -124,8 +124,10 @@ def bulkExcel(request):
                     response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                     response['Content-Disposition'] = 'attachment; filename=Combined-Excel-Sheet.xlsx'
                 return response
+        
+        messages.success(request, 'Files processed successfully.')
 
-    return redirect('dashboard')
+    return redirect('view-stp')
 
 def bulkPDF(request):
     if request.method == 'POST':
@@ -143,7 +145,7 @@ def bulkPDF(request):
 
             if not is_pdf:
                 messages.warning(request, 'Please insert PDF files only to perform the action.')
-                return redirect('dashboard')
+                return redirect('view-stp')
             
             if file_object:
                 file_path = os.path.join(pdf_dir, file_object.name)
@@ -178,27 +180,36 @@ def bulkPDF(request):
                 # Check if the STP ID exists in the STPRecord model
                 if not STPRecord.objects.filter(stp_id=int(stpid)).exists():
                     # If STP ID does not exist, store data in STPRecord model
-                    df = pd.read_excel(excel_path)
-                    for _, row in df.iterrows():
-                        if not STPRecord.objects.filter(stp_id=int(stpid)).exists():
-                            STPRecord.objects.create(
-                                file_name=file_object.name,
-                                stp_id=int(stpid),
-                                product_name=row.get('Product Name', ''),
-                                batch_number=row.get('Batch Number', ''),
-                                manufacture_date=row.get('Manufacture Date', None),
-                                expiry_date=row.get('Expiry Date', None),
-                                active_ingredient_concentration=row.get('Active Ingredient Concentration', ''),
-                                capsule_size=row.get('Capsule Size', ''),
-                                dissolution_test=row.get('Dissolution Test', ''),
-                                hardness_test=row.get('Hardness Test', ''),
-                                moisture_content=row.get('Moisture Content', ''),
-                                uniformity_of_dosage_unit=row.get('Uniformity of Dosage Unit', ''),
-                                appearance=row.get('Appearance', ''),
-                                packaging_integrity=row.get('Packaging Integrity', ''),
-                                storage_conditions=row.get('Storage Conditions', ''),
-                                stability_testing=row.get('Stability Testing', '')
-                            )
+                    df = pd.read_excel(excel_path, header=None, index_col=0)
+                    data = df[1].to_dict()
+
+                    def parse_date(date):
+                        if pd.isna(date):
+                            return None
+                        return str(pd.to_datetime(date).date())
+                    def clean_data(value):
+                        return '' if pd.isna(value) else value
+
+                    stp_record = STPRecord(
+                        file_name = file_object.name,
+                        stp_id = int(stpid),
+                        product_name = clean_data(data.get('Product Name', '')),
+                        batch_number = clean_data(data.get('Batch Number', '')),
+                        manufacture_date = parse_date(data.get('Manufacture Date', None)),
+                        expiry_date = parse_date(data.get('Expiry Date', None)),
+                        active_ingredient_concentration = clean_data(data.get('Active Ingredient Concentration', '')),
+                        capsule_size = clean_data(data.get('Capsule Size', '')),
+                        dissolution_test = clean_data(data.get('Dissolution Test', '')),
+                        hardness_test = clean_data(data.get('Hardness Test', '')),
+                        moisture_content = clean_data(data.get('Moisture Content', '')),
+                        dosage_unit_uniformity = clean_data(data.get('Uniformity of Dosage Unit', '')),
+                        appearance = clean_data(data.get('Appearance', '')),
+                        packaging_integrity = clean_data(data.get('Packaging Integrity', '')),
+                        storage_conditions = clean_data(data.get('Storage Conditions', '')),
+                        stability_testing = clean_data(data.get('Stability Testing', ''))
+                    )
+                    stp_record.save()
+
                     processed_path = os.path.join(processed_dir, os.path.basename(excel_path))
                     counter = 1
                     while os.path.exists(processed_path):
@@ -216,6 +227,14 @@ def bulkPDF(request):
                         counter += 1
                     os.rename(excel_path, error_path)
 
+        # Now storing the STPRecords to the excel sheet
+        try:
+            STPRecord_to_excel()
+        except:
+            messages.error(request, 'The process cannot access the file because it is being used by another process.')
+            return redirect('view-stp')
+
+        messages.success(request, 'Files has been processed successfully.')
         return redirect('view-stp')
 
     return redirect('view-stp')
@@ -229,14 +248,14 @@ def update(request, stp_id):
         form = get_object_or_404(FormData, stp_id=stp_id)
         form.product_name = request.POST.get('product_name', '')
         form.batch_number = request.POST.get('batch_number', '')
-        form.manufacture_date = request.POST.get('manufacture_date', None)
-        form.expiry_date = request.POST.get('expiry_date', None)
+        form.manufacture_date = request.POST.get('manufacture_date', None) or None
+        form.expiry_date = request.POST.get('expiry_date', None) or None
         form.active_ingredient_concentration = request.POST.get('active_ingredient_concentration', '')
         form.capsule_size = request.POST.get('capsule_size', '')
-        form.dessolution_test = request.POST.get('dessolution_test', '')
+        form.dissolution_test = request.POST.get('dissolution_test', '')
         form.hardness_test = request.POST.get('hardness_test', '')
         form.moisture_content = request.POST.get('moisture_content', '')
-        form.dosage_unit_uniformiry = request.POST.get('dosage_unit_uniformiry', '')
+        form.dosage_unit_uniformity = request.POST.get('dosage_unit_uniformity', '')
         form.appearance = request.POST.get('appearance', '')
         form.packaging_integrity = request.POST.get('packaging_integrity', '')
         form.storage_conditions = request.POST.get('storage_conditions', '')
@@ -289,10 +308,10 @@ def form(request):
         expiry_date = request.POST.get('expiry_date', None) or None
         active_ingredient_concentration = request.POST.get('active_ingredient_concentration')
         capsule_size = request.POST.get('capsule_size')
-        dessolution_test = request.POST.get('dessolution_test')
+        dissolution_test = request.POST.get('dissolution_test')
         hardness_test = request.POST.get('hardness_test')
         moisture_content = request.POST.get('moisture_content')
-        dosage_unit_uniformiry = request.POST.get('dosage_unit_uniformiry')
+        dosage_unit_uniformity = request.POST.get('dosage_unit_uniformity')
         appearance = request.POST.get('appearance')
         packaging_integrity = request.POST.get('storage_conditions')
         storage_conditions = request.POST.get('moisture_content')
@@ -310,10 +329,10 @@ def form(request):
             expiry_date=expiry_date,
             active_ingredient_concentration=active_ingredient_concentration,
             capsule_size=capsule_size,
-            dessolution_test=dessolution_test,
+            dissolution_test=dissolution_test,
             hardness_test=hardness_test,
             moisture_content=moisture_content,
-            dosage_unit_uniformiry=dosage_unit_uniformiry,
+            dosage_unit_uniformity=dosage_unit_uniformity,
             appearance=appearance,
             packaging_integrity=packaging_integrity,
             storage_conditions=storage_conditions,
@@ -325,15 +344,79 @@ def form(request):
 
     return render(request, 'form.html', context)
 
+def stpForm(request):
+    if STPRecord.objects.last():
+        stp_id = STPRecord.objects.last().stp_id + 1
+    else:
+        stp_id =  1
+
+    context = {
+        'stp_id': stp_id
+    }
+    if not request.user.is_authenticated:
+        messages.warning(request, "Login Required!")
+        return redirect('/', context)
+
+    if request.method == 'POST':
+        file_name = request.POST.get('file_name')
+        stp_id = request.POST.get('stp_id')
+        product_name = request.POST.get('product_name')
+        batch_number = request.POST.get('batch_number')
+        manufacture_date = request.POST.get('manufacture_date', None) or None
+        expiry_date = request.POST.get('expiry_date', None) or None
+        active_ingredient_concentration = request.POST.get('active_ingredient_concentration')
+        capsule_size = request.POST.get('capsule_size')
+        dissolution_test = request.POST.get('dissolution_test')
+        hardness_test = request.POST.get('hardness_test')
+        moisture_content = request.POST.get('moisture_content')
+        dosage_unit_uniformity = request.POST.get('dosage_unit_uniformity')
+        appearance = request.POST.get('appearance')
+        packaging_integrity = request.POST.get('storage_conditions')
+        storage_conditions = request.POST.get('moisture_content')
+        stability_testing = request.POST.get('stability_testing')     
+
+        if not product_name:
+            messages.warning(request, "The product name is required!")
+            return redirect('/stp-form/')
+
+        stpform = STPRecord(
+            file_name=file_name,
+            stp_id=stp_id, 
+            product_name=product_name,
+            batch_number=batch_number,
+            manufacture_date=manufacture_date,
+            expiry_date=expiry_date,
+            active_ingredient_concentration=active_ingredient_concentration,
+            capsule_size=capsule_size,
+            dissolution_test=dissolution_test,
+            hardness_test=hardness_test,
+            moisture_content=moisture_content,
+            dosage_unit_uniformity=dosage_unit_uniformity,
+            appearance=appearance,
+            packaging_integrity=packaging_integrity,
+            storage_conditions=storage_conditions,
+            stability_testing=stability_testing,
+        )
+        stpform.save()
+
+        # creating excel sheet
+        STPRecord_to_excel()
+        messages.success(request, "STP added successfully.")
+        return redirect('/view-stp/')
+
+    return render(request, 'stp-form.html', context)
+
 def viewSTP(request):
-    excel_path = os.path.join(settings.MEDIA_ROOT / 'STP-Files' , 'Processed', 'Combined-Data-Sheet.xlsx')
-    df = pd.read_excel(excel_path, sheet_name=None)
-    combined_df = pd.concat(df.values())
-    data_list = combined_df.to_dict(orient='records')
+    try:
+        records = STPRecord.objects.all().values()
+        data_list = list(records)
+    except Exception as e:
+        data_list = []
+
     media_url = request.build_absolute_uri(settings.MEDIA_URL)
     context = {
-        'data' : data_list,
-        'media_url' : media_url
+        'data': data_list,
+        'media_url': media_url
     }
     return render(request, 'view-stp.html', context)
 
@@ -365,10 +448,10 @@ def generate_pdf(request, stp_id):
         'Expiry Date': form.expiry_date,
         'Active Ingredient Concentration': form.active_ingredient_concentration,
         'Capsule Size': form.capsule_size,
-        'Dissolution Test': form.dessolution_test,
+        'Dissolution Test': form.dissolution_test,
         'Hardness Test': form.hardness_test,
         'Moisture Content': form.moisture_content,
-        'Uniformity of Dosage Unit': form.dosage_unit_uniformiry,
+        'Uniformity of Dosage Unit': form.dosage_unit_uniformity,
         'Appearance': form.appearance,
         'Packaging Integrity': form.packaging_integrity,
         'Storage Conditions': form.storage_conditions,
@@ -451,10 +534,10 @@ def generate_excel(request, stp_id):
         'Expiry Date': form.expiry_date,
         'Active Ingredient Concentration': form.active_ingredient_concentration,
         'Capsule Size': form.capsule_size,
-        'Dissolution Test': form.dessolution_test,
+        'Dissolution Test': form.dissolution_test,
         'Hardness Test': form.hardness_test,
         'Moisture Content': form.moisture_content,
-        'Uniformity of Dosage Unit': form.dosage_unit_uniformiry,
+        'Uniformity of Dosage Unit': form.dosage_unit_uniformity,
         'Appearance': form.appearance,
         'Packaging Integrity': form.packaging_integrity,
         'Storage Conditions': form.storage_conditions,

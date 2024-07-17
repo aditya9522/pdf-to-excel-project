@@ -2,6 +2,10 @@ import fitz  # PyMuPDF
 import io
 from openpyxl import Workbook
 from openpyxl.styles import Font
+from .models import STPRecord
+import pandas as pd
+from django.conf import settings
+import os
 
 def pdf_to_excel(pdf_file):
     pdf_document = fitz.open(pdf_file)
@@ -58,3 +62,38 @@ def pdf_to_excel(pdf_file):
             current_row += 1
 
     return workbook, stp_id
+
+def STPRecord_to_excel():
+    pdf_dir = os.path.join(settings.MEDIA_ROOT, 'STP-Files')
+    processed_dir = os.path.join(pdf_dir, 'Processed')
+    os.makedirs(processed_dir, exist_ok=True)
+    
+    records = STPRecord.objects.all().values()
+    df = pd.DataFrame(list(records))
+    
+    headers = {
+        'stp_id': 'STP ID',
+        'file_name': 'File Name',
+        'product_name': 'Product Name',
+        'batch_number': 'Batch Number',
+        'manufacture_date': 'Manufacture Date',
+        'expiry_date': 'Expiry Date',
+        'active_ingredient_concentration': 'Active Ingredient Concentration',
+        'capsule_size': 'Capsule Size',
+        'dissolution_test': 'Dissolution Test',
+        'hardness_test': 'Hardness Test',
+        'moisture_content': 'Moisture Content',
+        'dosage_unit_uniformity': 'Uniformity of Dosage Unit',
+        'appearance': 'Appearance',
+        'packaging_integrity': 'Packaging Integrity',
+        'storage_conditions': 'Storage Conditions',
+        'stability_testing': 'Stability Testing'
+    }
+    
+    df.rename(columns=headers, inplace=True)
+    export_path = os.path.join(processed_dir, 'STP-Records.xlsx')
+
+    if os.path.exists(export_path):
+        os.remove(export_path)
+    
+    df.to_excel(export_path, index=False)

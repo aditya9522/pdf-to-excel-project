@@ -15,12 +15,12 @@
         <div class="d-flex justify-content-between">
             <div class="">
                 <a href="/dashboard" class="btn btn-info text-light shadow">Back</a>
-                <button class="btn btn-info text-light shadow mx-4" onclick="location.reload()">Refresh</button>
+                <button class="btn btn-info text-light shadow mx-4 {% if not data %}disabled{% endif %}" onclick="location.reload()">Refresh</button>
             </div>
             <div class="">
-                <a href="{{ media_url }}STP-Files/Processed/Combined-Data-Sheet.xlsx" target="_blank" class="btn text-light shadow" style="background-color: #2a3441;" {% if data %}disabled{% endif %}>Open Sheet</a>
+                <a href="{{ media_url }}STP-Files/Processed/STP-Records.xlsx" target="_blank" class="btn text-light shadow {% if not data %}disabled{% endif %}" style="background-color: #2a3441;">Open Sheet</a>
                 <button type="button" class="btn btn-primary mx-4" data-bs-toggle="modal" data-bs-target="#bulkmodal">Add Bulk Data</button>
-                <a href="/form/" class="btn btn-success text-light shadow">Add STP</a>
+                <a href="/stp-form/" class="btn btn-success text-light shadow">Add STP</a>
             </div>
         </div>
         {% if data %}
@@ -50,7 +50,7 @@
                     {% for record in data %}
                     <tr>
                         {% for key, value in record.items %}
-                            <td>{{ value }}</td>
+                            <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ value }}</td>
                         {% endfor %}
                     </tr>
                     {% endfor %}
@@ -58,7 +58,7 @@
             </table>
         </div>
         {% else %}
-        <div class="text-center h3 mt-5">Records not available</div>
+        <div class="text-center h3 mt-5">STPs not available</div>
         {% endif %}
     </div>
 
@@ -156,7 +156,7 @@
             html += `<div class="mb-3 previous"><label for="attachment_${type}_${i}" class="form-label">Attachment ${i}</label><input type="file" required name="attachment_${type}_${i}" class="form-control" id="attachment_${type}_${i}"></div>`;
         }
 
-        html += `<div class="mt-4 previous"><button type="submit" class="btn btn-success">Submit</button></div>`;
+        html += `<div class="mt-4 previous"><button type="submit" class="btn btn-success">Process Files</button></div>`;
 
         form.innerHTML += html;
     }

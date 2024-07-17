@@ -11,15 +11,16 @@
         <form class="" method="POST" style="width: 80%;">
             {% csrf_token %}
             <div class="my-3 text-end">
-                <a href="/dashboard" class="btn btn-info text-light mx-4 shadow">Exit</a>
+                <a href="/view-stp" class="btn btn-info text-light mx-4 shadow">Exit</a>
                 <button type="submit" class="btn btn-info text-light shadow">Save</button>
             </div>
             <div class="border shadow rounded p-4 bg-light">
                 {% comment %} <span class="bg-white rounded py-2 px-3 text-dark fw-medium">Record Number : {{ form.stp_id }}</span> {% endcomment %}
+                <input type="text" class="form-control border-gray border-2" id="file_name" name="file_name" value="Manually added" hidden>
                 <div class="mb-3 row">
                     <div class="col-6">
                         <label for="stp_id" class="form-label">STP ID</label>
-                        <input type="number" class="form-control border-gray border-2" id="stp_id" value="{{ stp_id }}" name="stp_id" disabled>
+                        <input type="number" class="form-control border-gray border-2" id="stp_id" value="{{ stp_id }}" name="stp_id" readonly>
                     </div>
                     <div class="col-6">
                         <label for="batch_number" class="form-label">Batch Number</label>
